@@ -642,6 +642,9 @@ describe("GameLeftSidebar", () => {
     expect(sections()).toEqual(["player"]);
 
     // A press on another button of the bar closes it, like any press outside.
+    button("teams")?.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true }),
+    );
     button("teams")?.click();
     await sidebar.updateComplete;
     await picker.updateComplete;
@@ -696,6 +699,95 @@ describe("GameLeftSidebar", () => {
     expect(new UserSettings().statsColumns("player")).toContain("cities");
     expect(new UserSettings().statsColumns("team")).not.toContain("cities");
     expect(header()).not.toBeNull();
+
+    sidebar.remove();
+  });
+
+  it("closes a column menu opened from a header with one press of its button", async () => {
+    const sidebar = new GameLeftSidebar();
+    sidebar.game = ffaGame();
+    sidebar.eventBus = new EventBus();
+    document.body.append(sidebar);
+    sidebar.init();
+    await sidebar.updateComplete;
+    sidebar
+      .querySelector<HTMLElement>('[data-sidebar-button="players"]')
+      ?.click();
+    await sidebar.updateComplete;
+    const picker = sidebar.querySelector("column-picker") as ColumnPicker;
+    sidebar.querySelector("player-stats")?.dispatchEvent(
+      new CustomEvent("columns-menu", {
+        bubbles: true,
+        detail: { x: 10, y: 10 },
+      }),
+    );
+    await picker.updateComplete;
+    expect(document.body.querySelector("[data-column-menu]")).not.toBeNull();
+
+    const columns = sidebar.querySelector<HTMLElement>(
+      '[data-sidebar-button="columns"]',
+    );
+    columns?.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
+    );
+    columns?.click();
+    await picker.updateComplete;
+    expect(document.body.querySelector("[data-column-menu]")).toBeNull();
+
+    sidebar.remove();
+  });
+
+  it("gives focus to the header row when the keyboard's header was unticked", async () => {
+    const sidebar = new GameLeftSidebar();
+    sidebar.game = ffaGame();
+    sidebar.eventBus = new EventBus();
+    document.body.append(sidebar);
+    sidebar.init();
+    await sidebar.updateComplete;
+    sidebar
+      .querySelector<HTMLElement>('[data-sidebar-button="players"]')
+      ?.click();
+    await sidebar.updateComplete;
+    sidebar.tick();
+    const playerStats = sidebar.querySelector("player-stats") as PlayerStats;
+    await playerStats.updateComplete;
+    const picker = sidebar.querySelector("column-picker") as ColumnPicker;
+
+    // The context menu key on the gold header, reached with the keyboard.
+    const gold = playerStats.querySelector<HTMLElement>(
+      '[role="columnheader"][data-column="gold"] button',
+    )!;
+    gold.focus();
+    const matches = gold.matches.bind(gold);
+    vi.spyOn(gold, "matches").mockImplementation(
+      (selector) => selector === ":focus-visible" || matches(selector),
+    );
+    gold.dispatchEvent(
+      new MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
+    );
+    await picker.updateComplete;
+
+    // Unticking gold takes its header away.
+    [
+      ...document.body.querySelectorAll<HTMLInputElement>(
+        '[data-column-section="player"] input[type="checkbox"]',
+      ),
+    ]
+      .find((box) => box.closest("label")?.dataset.column === "gold")
+      ?.click();
+    await playerStats.updateComplete;
+    expect(gold.isConnected).toBe(false);
+
+    document.activeElement?.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    await picker.updateComplete;
+
+    expect(document.body.querySelector("[data-column-menu]")).toBeNull();
+    expect(document.activeElement).toBe(
+      playerStats.querySelector(".stats-table-header button"),
+    );
+    expect(document.activeElement).not.toBe(document.body);
 
     sidebar.remove();
   });
