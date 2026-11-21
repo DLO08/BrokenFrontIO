@@ -99,7 +99,9 @@ export class AirStrikeExecution implements Execution {
     }
 
     const speed =
-      this.kind === "bomb" ? config.bomberSpeed() : config.transportPlaneSpeed();
+      this.kind === "bomb"
+        ? config.bomberSpeed()
+        : config.transportPlaneSpeed();
     if (!flyToward(this.mg, this.plane, this.dst, speed)) {
       return;
     }
@@ -128,7 +130,9 @@ export class AirStrikeExecution implements Execution {
     let troops = 0;
     if (this.kind === "paratroop") {
       const level =
-        home.type() === UnitType.AircraftCarrier ? 2 : Math.max(1, home.level());
+        home.type() === UnitType.AircraftCarrier
+          ? 2
+          : Math.max(1, home.level());
       const cap = this.mg.config().paratroopersPerBaseLevel() * level;
       const want =
         this.troops ??

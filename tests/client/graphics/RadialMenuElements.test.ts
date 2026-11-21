@@ -1,5 +1,8 @@
 import { TileRef } from "@openfront/engine-api/game/GameMap";
-import { UnitType } from "@openfront/engine-api/game/GameTypes";
+import {
+  BuildableAttacks,
+  UnitType,
+} from "@openfront/engine-api/game/GameTypes";
 import { vi, type Mock } from "vitest";
 import {
   attackMenuElement,
@@ -211,13 +214,10 @@ describe("RadialMenuElements", () => {
       expect(subMenu).toBeDefined();
       expect(subMenu.length).toBeGreaterThan(0);
 
-      const attackUnitTypes = [
-        UnitType.AtomBomb,
-        UnitType.MIRV,
-        UnitType.HydrogenBomb,
-        UnitType.Warship,
-      ];
-      const returnedUnitTypes = subMenu.map((item) => {
+      const attackUnitTypes: readonly UnitType[] = BuildableAttacks.types;
+      // BrokenFront actions (air strike, transit, ...) are not unit builds.
+      const unitItems = subMenu.filter((item) => !item.id.startsWith("bf_"));
+      const returnedUnitTypes = unitItems.map((item) => {
         const unitTypeStr = item.id.replace("attack_", "");
         return Object.values(UnitType).find(
           (type) => type.toString() === unitTypeStr,

@@ -66,6 +66,7 @@ import { PlaySoundEffectEvent } from "../../sound/Sounds";
 import { SendWinnerEvent } from "../../Transport";
 import { shareGame } from "../../utilities/ShareGame";
 import { GameView } from "../../view";
+import { goToNextLobby, NextLobbyKnownEvent } from "./NewLobbyPrompt";
 
 type LegendCeremonyModule = typeof import("../../components/LegendCeremony");
 
@@ -140,6 +141,10 @@ export class WinModal extends LitElement implements Controller {
   // unranked game, or a ranked FFA game, which has no queue any more).
   @state()
   private requeueMode: MatchmakingMode | null = null;
+
+  // The group's next lobby (private games), once the server has opened it.
+  @state()
+  private nextLobbyId: string | null = null;
 
   @state()
   private patternContent: TemplateResult | null = null;
@@ -245,6 +250,16 @@ export class WinModal extends LitElement implements Controller {
             "exit",
           )}
           ${this.renderShare()}
+          ${
+            this.nextLobbyId !== null
+              ? this.actionButton(
+                  "main",
+                  translateText("win_modal.back_to_lobby"),
+                  () => this._handleBackToLobby(),
+                  "back-to-lobby",
+                )
+              : null
+          }
           ${
             this.requeueMode !== null
               ? this.actionButton(
@@ -1011,6 +1026,15 @@ export class WinModal extends LitElement implements Controller {
     exitGame();
   }
 
+  private _handleBackToLobby() {
+    if (this.nextLobbyId === null) return;
+    this.hide();
+    void goToNextLobby(
+      this.nextLobbyId,
+      this.game?.myPlayer()?.isLobbyCreator() ?? false,
+    );
+  }
+
   private _handleRequeue() {
     if (this.requeueMode === null) return;
     this.hide();
@@ -1030,6 +1054,9 @@ export class WinModal extends LitElement implements Controller {
 
   init() {
     if (this.game.config().isReplay()) return;
+    this.eventBus.on(NextLobbyKnownEvent, (e) => {
+      this.nextLobbyId = e.gameID;
+    });
     loadGameXpPanel();
     void this.captureStartProgress();
   }

@@ -321,7 +321,6 @@ class SAMTargetingSystem {
   }
 }
 
-
 export class SAMLauncherExecution implements Execution {
   private mg: Game;
   private active: boolean = true;

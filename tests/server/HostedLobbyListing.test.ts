@@ -24,6 +24,7 @@ import {
   GamePhase,
   GameServer,
   hashPersistentID,
+  HOST_RETURN_GRACE_MS,
 } from "../../src/server/GameServer";
 import {
   InternalGameInfo,
@@ -539,26 +540,61 @@ describe("host-left lobby teardown", () => {
     vi.useRealTimers();
   });
 
-  it("ends and prunes an unlisted lobby when the host leaves", async () => {
+  it("ends and prunes an unlisted lobby the host leaves empty", async () => {
     const gm = new GameManager(mockLogger);
     const game = gm.createGame("g-host-leaves", undefined, CREATOR)!;
 
     const hostWs = fakeWs();
-    const guestWs = fakeWs();
     expect(game.joinClient(makeClient("host", CREATOR, hostWs))).toBe("joined");
-    expect(game.joinClient(makeClient("guest", OTHER_CREATOR, guestWs))).toBe(
-      "joined",
-    );
+
+    await hostWs.trigger("close");
+    expect(game.phase()).toBe(GamePhase.Finished);
+
+    // The next manager tick prunes the game entirely.
+    gm.tick();
+    expect(gm.game("g-host-leaves")).toBeNull();
+  });
+
+  it("passes hosting on when the host does not come back to a waiting lobby", async () => {
+    const gm = new GameManager(mockLogger);
+    const game = gm.createGame("g-host-migrates", undefined, CREATOR)!;
+
+    const hostWs = fakeWs();
+    const guestWs = fakeWs();
+    game.joinClient(makeClient("host", CREATOR, hostWs));
+    game.joinClient(makeClient("guest", OTHER_CREATOR, guestWs));
 
     await hostWs.trigger("close");
 
-    // Remaining players are kicked...
-    expect(guestWs.close).toHaveBeenCalled();
-    expect(game.phase()).toBe(GamePhase.Finished);
-
-    // ...and the next manager tick prunes the game entirely.
+    // The guest keeps their seat while the host has time to come back.
+    expect(guestWs.close).not.toHaveBeenCalled();
+    expect(game.phase()).toBe(GamePhase.Lobby);
     gm.tick();
-    expect(gm.game("g-host-leaves")).toBeNull();
+    expect(game.isCreator(CREATOR)).toBe(true);
+
+    vi.advanceTimersByTime(HOST_RETURN_GRACE_MS + 1_000);
+    gm.tick();
+    expect(game.isCreator(OTHER_CREATOR)).toBe(true);
+    expect(game.gameInfo().lobbyCreatorClientID).toBe("guest");
+  });
+
+  it("keeps the host when they come back within the grace period", async () => {
+    const gm = new GameManager(mockLogger);
+    const game = gm.createGame("g-host-returns", undefined, CREATOR)!;
+
+    const hostWs = fakeWs();
+    game.joinClient(makeClient("host", CREATOR, hostWs));
+    game.joinClient(makeClient("guest", OTHER_CREATOR, fakeWs()));
+
+    await hostWs.trigger("close");
+    vi.advanceTimersByTime(HOST_RETURN_GRACE_MS / 2);
+    // A refresh: the host joins again under the same persistent id.
+    expect(game.joinClient(makeClient("host2", CREATOR, fakeWs()))).toBe(
+      "joined",
+    );
+    vi.advanceTimersByTime(HOST_RETURN_GRACE_MS);
+    gm.tick();
+    expect(game.isCreator(CREATOR)).toBe(true);
   });
 
   it("keeps a listed lobby going when the host leaves", async () => {

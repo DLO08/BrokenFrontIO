@@ -151,6 +151,10 @@ const DERIVED_FIELDS = new Set<string>([
   "myUnitCountMemo",
   "myUnitsOwnedMemo",
   "nearbyMemo",
+  "_tradeView", // rebuilt whenever the trade book's version moves
+  "_tradeViewVersion",
+  // TradeBook: only keys the per-player trade view caches above
+  "_version",
   // GameMapImpl BFS scratch buffers
   "bfsVisited",
   "bfsQueue",

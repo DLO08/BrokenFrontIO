@@ -46,16 +46,16 @@ import {
   packMotionPlans,
 } from "@openfront/engine-lib/game/MotionPlans";
 import {
-  assignTeams,
-  resolveTeamsList,
-} from "@openfront/engine-lib/game/TeamAssignment";
-import { TerraNulliusImpl } from "@openfront/engine-lib/game/TerraNulliusImpl";
-import {
   Deposit,
   rasterizeDeposits,
   sanitizeDeposits,
   seedUraniumDeposits,
 } from "@openfront/engine-lib/game/ResourceDeposits";
+import {
+  assignTeams,
+  resolveTeamsList,
+} from "@openfront/engine-lib/game/TeamAssignment";
+import { TerraNulliusImpl } from "@openfront/engine-lib/game/TerraNulliusImpl";
 import { UnitGrid } from "@openfront/engine-lib/game/UnitGrid";
 import {
   readVersioned,

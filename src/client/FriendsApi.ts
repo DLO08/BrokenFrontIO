@@ -1,4 +1,5 @@
 import {
+  type FriendEntry,
   type FriendRequestsResponse,
   FriendRequestsResponseSchema,
   type FriendsListResponse,
@@ -6,8 +7,13 @@ import {
   type SendFriendRequestResponse,
   SendFriendRequestResponseSchema,
 } from "@openfront/shared/ApiSchemas";
+import {
+  type FriendStatusResponse,
+  FriendStatusResponseSchema,
+} from "@openfront/shared/FriendSchemas";
 import { getApiBase } from "./Api";
-import { getAuthHeader } from "./Auth";
+import { getAuthHeader, getPlayToken } from "./Auth";
+import { ClientEnv } from "./ClientEnv";
 
 export const FRIEND_REQUESTS_UPDATED_EVENT = "friend-requests-updated";
 
@@ -178,4 +184,91 @@ export async function removeFriend(
     console.warn("removeFriend: request failed", err);
     return "request_failed";
   }
+}
+
+// --- Friend presence and lobby invites (this game server) ---
+//
+// These go to a game server rather than the API: only the game server knows
+// who is in which lobby. Any worker answers status (they share the master's
+// merged view, see src/server/FriendPresence.ts); an invite goes to the
+// worker that owns the lobby.
+
+/** Where friends are playing and the invites waiting for you, or false. */
+export async function fetchFriendStatus(): Promise<
+  FriendStatusResponse | false
+> {
+  try {
+    const token = await getPlayToken();
+    const res = await fetch(
+      `${ClientEnv.serverHttpBase()}/w0/api/friends/status`,
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) return false;
+    const parsed = FriendStatusResponseSchema.safeParse(await res.json());
+    return parsed.success ? parsed.data : false;
+  } catch (err) {
+    // No game server known (a static page), offline, or signed out.
+    console.warn("fetchFriendStatus: request failed", err);
+    return false;
+  }
+}
+
+export type InviteResult = true | "not_friend" | "not_found" | "failed";
+
+/** Invite a friend (by publicId) to the private lobby you are in. */
+export async function inviteFriendToLobby(
+  gameID: string,
+  publicId: string,
+): Promise<InviteResult> {
+  try {
+    const token = await getPlayToken();
+    const res = await fetch(
+      `${ClientEnv.gameHttpBase(gameID)}/${ClientEnv.gameWorkerPath(gameID)}/api/game/${encodeURIComponent(gameID)}/invite`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ publicId }),
+      },
+    );
+    if (res.ok) return true;
+    if (res.status === 404) return "not_found";
+    if (res.status === 403) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      return body.error === "not_friend" ? "not_friend" : "failed";
+    }
+    return "failed";
+  } catch (err) {
+    console.warn("inviteFriendToLobby: request failed", err);
+    return "failed";
+  }
+}
+
+/**
+ * Every friend's publicId and account name, for labelling status rows.
+ * Walks the API's pages up to a sane cap.
+ */
+export async function fetchAllFriends(
+  maxPages = 10,
+): Promise<FriendEntry[] | false> {
+  const all: FriendEntry[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const data = await fetchFriends(page, 50);
+    if (!data) return page === 1 ? false : all;
+    all.push(...data.results);
+    if (all.length >= data.total || data.results.length < 50) break;
+  }
+  return all;
+}
+
+/** Open a lobby by id: the page load joins it (or reopens the host view). */
+export function goToLobby(gameID: string): void {
+  window.location.href = `${window.location.origin}${ClientEnv.gamePath(gameID)}`;
 }

@@ -43,6 +43,7 @@ describe("TrainStation", () => {
       addUpdate: vi.fn(),
       addExecution: vi.fn(),
       stats: vi.fn().mockReturnValue(gameStats),
+      trade: vi.fn().mockReturnValue({ isPartner: () => false }),
     } as any;
 
     player = {

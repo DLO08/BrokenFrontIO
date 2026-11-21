@@ -74,6 +74,7 @@ import {
   type DesktopUpdateState,
 } from "./DesktopShell";
 import "./FeaturedStream";
+import { watchFriendInvites } from "./FriendInviteWatcher";
 import {
   claimGameClientReload,
   loadGameClient,
@@ -521,6 +522,10 @@ class Client {
       pageId: "page-leaderboard",
     });
     modalRouter.register("clan", { tag: "clan-modal", pageId: "page-clan" });
+    modalRouter.register("friends", {
+      tag: "friends-modal",
+      pageId: "page-friends",
+    });
     modalRouter.register("account", {
       tag: "account-modal",
       pageId: "page-account",
@@ -851,6 +856,11 @@ class Client {
     watchPlayPurchases();
 
     const onUserMe = async (userMeResponse: UserMeResponse | false) => {
+      // Lobby invites from friends (Friends page). Not on portals, which
+      // hide the friends features.
+      watchFriendInvites(
+        userMeResponse !== false && !gamePortal.isOnGamePortal(),
+      );
       if (gamePortal.isOnGamePortal()) {
         void updatePortalNavButton();
       } else {

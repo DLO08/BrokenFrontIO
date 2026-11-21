@@ -1374,7 +1374,10 @@ export class PlayerImpl implements Player {
   private _tradeViewVersion = -1;
   private tradeView(): TradeView {
     const book = this.mg.trade();
-    if (this._tradeView === undefined || this._tradeViewVersion !== book.version()) {
+    if (
+      this._tradeView === undefined ||
+      this._tradeViewVersion !== book.version()
+    ) {
       this._tradeView = book.viewFor(this);
       this._tradeViewVersion = book.version();
     }
@@ -1848,7 +1851,11 @@ export class PlayerImpl implements Player {
     const cx = map.x(tile);
     const cy = map.y(tile);
     const smallID = this.smallID();
-    for (let y = Math.max(0, cy - radius); y <= Math.min(h - 1, cy + radius); y++) {
+    for (
+      let y = Math.max(0, cy - radius);
+      y <= Math.min(h - 1, cy + radius);
+      y++
+    ) {
       for (
         let x = Math.max(0, cx - radius);
         x <= Math.min(w - 1, cx + radius);

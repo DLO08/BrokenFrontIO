@@ -1,5 +1,4 @@
-const ACTIVE_CARD =
-  "bg-brand/20 border-brand/50 shadow-[var(--shadow-brand)]";
+const ACTIVE_CARD = "bg-brand/20 border-brand/50 shadow-[var(--shadow-brand)]";
 const INACTIVE_CARD =
   "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20";
 export const INPUT_CLASS =

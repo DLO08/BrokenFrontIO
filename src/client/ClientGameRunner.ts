@@ -13,6 +13,7 @@ import {
 } from "@openfront/engine-api/game/GameUpdates";
 import { ClientID, GameID } from "@openfront/engine-api/Schemas";
 import { Config } from "@openfront/engine-lib/configuration/Config";
+import { seedUraniumDeposits } from "@openfront/engine-lib/game/ResourceDeposits";
 import { TerrainMapData } from "@openfront/engine-lib/game/TerrainMapLoader";
 import { findClosestBy } from "@openfront/engine-lib/Util";
 import { EventBus } from "@openfront/shared/EventBus";
@@ -555,6 +556,10 @@ function createWebGLView(
         mapHeight,
         unitTypes: [...ALL_UNIT_TYPES],
         players: [],
+        // Same rule as the engine: the manifest's deposits, else the ones
+        // seeded from the (still pristine) map.
+        uraniumDeposits:
+          terrainMap.uraniumDeposits ?? seedUraniumDeposits(gameMap),
         // Pre-allocate renderer textures for up to 1024 players. We add players
         // dynamically via view.addPlayers() as they come in from the simulation,
         // but the NamePass / palette / relation matrix all need a static upper

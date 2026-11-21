@@ -38,8 +38,15 @@ import type { RendererConfig, UnitState } from "../../types";
 import {
   SMOOTHED_NUKE_TYPES,
   TrainType,
+  UT_AIRCRAFT_CARRIER,
   UT_ATOM_BOMB,
+  UT_BOMBER,
+  UT_CLUSTER_NUKE,
+  UT_CLUSTER_WARHEAD,
+  UT_FIGHTER,
+  UT_FISHING_BOAT,
   UT_HYDROGEN_BOMB,
+  UT_LARGE_NUKE,
   UT_MIRV,
   UT_MIRV_WARHEAD,
   UT_SAM_MISSILE,
@@ -47,6 +54,8 @@ import {
   UT_TRADE_SHIP,
   UT_TRAIN,
   UT_TRANSPORT,
+  UT_TRANSPORT_PLANE,
+  UT_TROOP_COLUMN,
   UT_WARSHIP,
 } from "../../types";
 import { DynamicInstanceBuffer } from "../DynamicBuffer";
@@ -85,6 +94,16 @@ const UNIT_ORDER = [
   "TrainEngine",
   "TrainCarriage",
   "TrainCarriageLoaded",
+  // BrokenFront (append only: atlas columns 12-20).
+  UT_LARGE_NUKE,
+  UT_CLUSTER_NUKE,
+  UT_CLUSTER_WARHEAD,
+  UT_FISHING_BOAT,
+  UT_AIRCRAFT_CARRIER,
+  UT_FIGHTER,
+  UT_BOMBER,
+  UT_TRANSPORT_PLANE,
+  UT_TROOP_COLUMN,
 ] as const;
 
 const ATLAS_COLS = UNIT_ORDER.length;
@@ -134,6 +153,9 @@ const FLICKER_TYPES: ReadonlySet<string> = new Set([
   UT_HYDROGEN_BOMB,
   UT_MIRV,
   UT_MIRV_WARHEAD,
+  UT_LARGE_NUKE,
+  UT_CLUSTER_NUKE,
+  UT_CLUSTER_WARHEAD,
   UT_SAM_MISSILE,
   UT_SHELL,
 ]);
@@ -147,6 +169,13 @@ const MISSILE_TYPES: ReadonlySet<string> = new Set([
   UT_SAM_MISSILE,
   UT_SHELL,
   UT_MIRV_WARHEAD,
+  UT_LARGE_NUKE,
+  UT_CLUSTER_NUKE,
+  UT_CLUSTER_WARHEAD,
+  // Aircraft fly above structures too.
+  UT_FIGHTER,
+  UT_BOMBER,
+  UT_TRANSPORT_PLANE,
 ]);
 
 /** Values per smoothing segment in the flat `smoothSegs` array:

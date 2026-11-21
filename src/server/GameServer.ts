@@ -141,6 +141,11 @@ const KICK_REASON_DUPLICATE_SESSION = "kick_reason.duplicate_session";
 const KICK_REASON_LOBBY_CREATOR = "kick_reason.lobby_creator";
 const KICK_REASON_ADMIN = "kick_reason.admin";
 const KICK_REASON_HOST_LEFT = "kick_reason.host_left";
+// How long a private lobby waits for its host before passing hosting on: a
+// host who left (or is refreshing) gets a short wait; one still on the
+// previous game's end screen gets a longer one.
+export const HOST_RETURN_GRACE_MS = 15_000;
+export const HOST_NEARBY_GRACE_MS = 120_000;
 const KICK_REASON_MATCH_CANCELLED = "kick_reason.match_cancelled";
 
 export interface GameServerOptions {
@@ -180,6 +185,10 @@ export interface GameServerDeps {
   // so a test can pin a value it can assert on; production always takes the
   // random default.
   mintGroupToken: () => string;
+  // Called once when a started game's winner is settled. GameManager uses
+  // it to open the next lobby of a private game so the group stays together
+  // (see GameManager.createSuccessorLobby).
+  onGameDecided: () => void;
 }
 
 // 16 URL-safe characters of CSPRNG output — 12 bytes is exactly 16 base64url
@@ -201,6 +210,7 @@ function defaultGameServerDeps(): GameServerDeps {
     turnIntervalMs: () => ServerEnv.turnIntervalMs(),
     gatekeeper: noopGatekeeper,
     mintGroupToken,
+    onGameDecided: () => {},
   };
 }
 
@@ -290,6 +300,14 @@ export class GameServer {
   // repeated create_game?previous= call (e.g. a double click) reuses the same
   // id instead of minting another lobby.
   private successorLobbyId: GameID | null = null;
+  // Set when the winner is first settled; onGameDecided runs once.
+  private decided = false;
+  // The finished game this lobby continues, when it is a successor lobby.
+  // GameManager reads it to tell whether an absent host is still on that
+  // game's end screen (see checkHostPresence).
+  public predecessorId: GameID | null = null;
+  // Since when this private lobby's host has been away while others wait.
+  private creatorAbsentSince: number | null = null;
 
   // This match's security hooks (see Gatekeeper.ts).
   private readonly gatekeeper: MatchGatekeeper;
@@ -881,11 +899,23 @@ export class GameServer {
     // tick prunes it. A listed lobby carries on without its host: it starts
     // on its listing deadline (or the queue's countdown), and the players who
     // joined it from the lobby browser keep their game.
+    //
+    // With other players still waiting, the host gets a grace period to come
+    // back (a refresh, or the hop from a finished game to this lobby), after
+    // which hosting passes to someone else (checkHostPresence). Only a lobby
+    // the host leaves empty closes straight away.
     if (
       !this.isPublic() &&
       !this.isListed() &&
       client.persistentID === this.creatorPersistentID
     ) {
+      if (this.clients.active().length > 0) {
+        this.creatorAbsentSince ??= Date.now();
+        this.log.info("Host left lobby, waiting for them to return", {
+          gameID: this.id,
+        });
+        return;
+      }
       this.log.info("Host left, closing lobby", {
         gameID: this.id,
       });
@@ -1934,6 +1964,66 @@ export class GameServer {
     return hostCheatsEnabled(this.gameConfig.hostCheats);
   }
 
+  /**
+   * Keep a private lobby hostable: once its host has been gone longer than
+   * the grace period while other players wait, hosting passes to the player
+   * who has been in the lobby longest (so the group is never stuck in a lobby
+   * nobody can start). `creatorNearby` is true while the host is still
+   * connected to the finished game this lobby continues — reading the end
+   * screen — which earns a longer wait. Called each second by GameManager.
+   * Returns the new host's persistentID when it moved.
+   */
+  public checkHostPresence(now: number, creatorNearby: boolean): string | null {
+    if (
+      this.isPublic() ||
+      this.isListed() ||
+      this.hasStarted() ||
+      this.ended ||
+      this.creatorPersistentID === undefined
+    ) {
+      return null;
+    }
+    if (this.hasConnectedClient(this.creatorPersistentID)) {
+      this.creatorAbsentSince = null;
+      return null;
+    }
+    const waiting = this.clients.active();
+    if (waiting.length === 0) {
+      return null;
+    }
+    this.creatorAbsentSince ??= now;
+    const grace = creatorNearby ? HOST_NEARBY_GRACE_MS : HOST_RETURN_GRACE_MS;
+    if (now - this.creatorAbsentSince < grace) {
+      return null;
+    }
+    const next = waiting.find((c) => !c.spectator) ?? waiting[0];
+    this.creatorPersistentID = next.persistentID;
+    this.creatorAbsentSince = null;
+    this.log.info("host did not return, passing host to another player", {
+      gameID: this.id,
+      clientID: next.clientID,
+    });
+    return next.persistentID;
+  }
+
+  // The host's persistentID, if this game has one.
+  public creatorID(): string | undefined {
+    return this.creatorPersistentID;
+  }
+
+  // Who should host the next lobby: this game's host while they are still
+  // connected, else the longest-connected remaining player (preferring a
+  // player over a spectator), else the host anyway.
+  public successorCreator(): string | undefined {
+    const creator = this.creatorPersistentID;
+    if (creator !== undefined && this.hasConnectedClient(creator)) {
+      return creator;
+    }
+    const active = this.clients.active();
+    const next = active.find((c) => !c.spectator) ?? active[0];
+    return next?.persistentID ?? creator;
+  }
+
   public isCreator(persistentId: string): boolean {
     return (
       this.creatorPersistentID !== undefined &&
@@ -2050,6 +2140,14 @@ export class GameServer {
   // The record's statsAgreed says whether its winner and stats were checked:
   // by at least two IPs sending the same ones, or by the replay.
   private settleWinner() {
+    if (!this.decided) {
+      this.decided = true;
+      try {
+        this.deps.onGameDecided();
+      } catch (error) {
+        this.log.error("onGameDecided failed", { error: String(error) });
+      }
+    }
     const voted = this.winnerVote.winner();
     const candidates = this.winnerVote.candidates();
     const backers = this.winnerVote.backers();

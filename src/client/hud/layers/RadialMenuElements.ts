@@ -29,6 +29,7 @@ import { TooltipItem } from "./RadialMenu";
 import { EventBus } from "@openfront/shared/EventBus";
 import {
   BuildUnitIntentEvent,
+  SendBrokenfrontIntentEvent,
   SendUpgradeStructureIntentEvent,
 } from "../../Transport";
 const allianceIcon = assetUrl("images/AllianceIconWhite.svg");
@@ -43,6 +44,8 @@ const swordIcon = assetUrl("images/SwordIconWhite.svg");
 const targetIcon = assetUrl("images/TargetIconWhite.svg");
 const traitorIcon = assetUrl("images/TraitorIconWhite.svg");
 const xIcon = assetUrl("images/XIcon.svg");
+const bomberIcon = assetUrl("images/AirbaseIconWhite.svg");
+const paradropIcon = assetUrl("images/DonateTroopIconWhite.svg");
 
 export interface MenuElementParams {
   myPlayer: PlayerView;
@@ -578,7 +581,9 @@ function createMenuElements(
             } else if (buildableUnit.canBuild !== false) {
               const rocketDirectionUp =
                 item.unitType === UnitType.AtomBomb ||
-                item.unitType === UnitType.HydrogenBomb
+                item.unitType === UnitType.HydrogenBomb ||
+                item.unitType === UnitType.LargeNuke ||
+                item.unitType === UnitType.ClusterNuke
                   ? params.uiState?.rocketDirectionUp
                   : undefined;
               params.eventBus.emit(
@@ -596,6 +601,140 @@ function createMenuElements(
     });
 }
 
+// --- BrokenFront actions -------------------------------------------------
+
+/** Whether the clicked tile belongs to a player we may strike. */
+function hostileTileOwner(params: MenuElementParams): PlayerView | null {
+  const owner = params.game.owner(params.tile);
+  if (!owner.isPlayer()) return null;
+  const p = owner as PlayerView;
+  if (p.id() === params.myPlayer.id() || p.isFriendly(params.myPlayer)) {
+    return null;
+  }
+  return p;
+}
+
+function hasAirBase(params: MenuElementParams): boolean {
+  return params.myPlayer
+    .units(UnitType.Airbase, UnitType.AircraftCarrier)
+    .some((u) => !u.isUnderConstruction());
+}
+
+const airStrikeElement: MenuElement = {
+  id: "bf_air_strike",
+  name: "air_strike",
+  displayed: (p) => !p.game.config().isUnitDisabled(UnitType.Bomber),
+  disabled: (p) =>
+    p.game.inSpawnPhase() || hostileTileOwner(p) === null || !hasAirBase(p),
+  icon: bomberIcon,
+  color: COLORS.attack,
+  tooltipKeys: [
+    { key: "radial_menu.air_strike_title", className: "title" },
+    { key: "radial_menu.air_strike_description", className: "description" },
+  ],
+  action: (p) => {
+    p.eventBus.emit(
+      new SendBrokenfrontIntentEvent({
+        type: "air_strike",
+        kind: "bomb",
+        tile: p.tile,
+        troops: null,
+      }),
+    );
+    p.closeMenu();
+  },
+};
+
+const paradropElement: MenuElement = {
+  id: "bf_paradrop",
+  name: "paradrop",
+  displayed: (p) => !p.game.config().isUnitDisabled(UnitType.TransportPlane),
+  disabled: (p) =>
+    p.game.inSpawnPhase() ||
+    !p.game.isLand(p.tile) ||
+    p.game.owner(p.tile) === p.myPlayer ||
+    (p.game.owner(p.tile).isPlayer() && hostileTileOwner(p) === null) ||
+    !hasAirBase(p),
+  icon: paradropIcon,
+  color: COLORS.attack,
+  tooltipKeys: [
+    { key: "radial_menu.paradrop_title", className: "title" },
+    { key: "radial_menu.paradrop_description", className: "description" },
+  ],
+  action: (p) => {
+    p.eventBus.emit(
+      new SendBrokenfrontIntentEvent({
+        type: "air_strike",
+        kind: "paratroop",
+        tile: p.tile,
+        troops: p.uiState ? p.myPlayer.troops() * p.uiState.attackRatio : null,
+      }),
+    );
+    p.closeMenu();
+  },
+};
+
+const transitAttackElement: MenuElement = {
+  id: "bf_transit",
+  name: "transit",
+  displayed: (p) => !p.game.config().isUnitDisabled(UnitType.TroopColumn),
+  disabled: (p) =>
+    p.game.inSpawnPhase() ||
+    hostileTileOwner(p) === null ||
+    p.myPlayer.allies().length === 0,
+  icon: swordIcon,
+  color: COLORS.ally,
+  tooltipKeys: [
+    { key: "radial_menu.transit_title", className: "title" },
+    { key: "radial_menu.transit_description", className: "description" },
+  ],
+  action: (p) => {
+    p.eventBus.emit(
+      new SendBrokenfrontIntentEvent({
+        type: "transit_attack",
+        dst: p.tile,
+        troops: p.uiState ? p.myPlayer.troops() * p.uiState.attackRatio : null,
+      }),
+    );
+    p.closeMenu();
+  },
+};
+
+const callToArmsElement: MenuElement = {
+  id: "bf_call_to_arms",
+  name: "call_to_arms",
+  disabled: (p) =>
+    p.game.inSpawnPhase() ||
+    hostileTileOwner(p) === null ||
+    p.myPlayer.allies().length === 0 ||
+    (p.myPlayer.trade()?.callToArmsReadyAt ?? 0) > p.game.ticks(),
+  icon: allianceIcon,
+  color: COLORS.target,
+  tooltipKeys: [
+    { key: "radial_menu.call_to_arms_title", className: "title" },
+    { key: "radial_menu.call_to_arms_description", className: "description" },
+  ],
+  action: (p) => {
+    const target = hostileTileOwner(p);
+    if (target !== null) {
+      p.eventBus.emit(
+        new SendBrokenfrontIntentEvent({
+          type: "call_to_arms",
+          target: target.id(),
+        }),
+      );
+    }
+    p.closeMenu();
+  },
+};
+
+const BROKENFRONT_ATTACK_ELEMENTS = [
+  airStrikeElement,
+  paradropElement,
+  transitAttackElement,
+  callToArmsElement,
+];
+
 export const attackMenuElement: MenuElement = {
   id: Slot.Attack,
   name: "radial_attack",
@@ -605,7 +744,12 @@ export const attackMenuElement: MenuElement = {
 
   subMenu: (params: MenuElementParams) => {
     if (params === undefined) return [];
-    return createMenuElements(params, "attack", "attack");
+    const extras = BROKENFRONT_ATTACK_ELEMENTS.filter((e) =>
+      typeof e.displayed === "function"
+        ? e.displayed(params)
+        : e.displayed !== false,
+    );
+    return [...createMenuElements(params, "attack", "attack"), ...extras];
   },
 };
 

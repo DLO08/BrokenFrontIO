@@ -40,6 +40,7 @@ import { z } from "zod";
 import { registerAdminBotRoutes } from "./AdminBotRoutes";
 import { censorPlayer, unshadowApiName } from "./Censor";
 import { Client } from "./Client";
+import { registerFriendRoutes } from "./FriendPresence";
 import { gameApiCors } from "./GameApiCors";
 import { GameManager } from "./GameManager";
 import { registerGamePreviewRoute } from "./GamePreviewRoute";
@@ -303,7 +304,9 @@ export async function startWorker() {
   });
 
   const gatekeeper = await loadGatekeeper(log);
-  const gm = new GameManager(log, gatekeeper);
+  const gm = new GameManager(log, gatekeeper, () =>
+    ServerEnv.generateGameIdForWorker(workerId),
+  );
 
   // Initialize lobby service (handles WebSocket upgrade routing)
   const lobbyService = new WorkerLobbyService(server, wss, gm, log);
@@ -424,42 +427,44 @@ export async function startWorker() {
     // this same worker (callers hit /wX/api/create_game for it), which is also
     // where the successor is minted. Going through this endpoint (instead of a
     // websocket message) keeps game creation behind its rate limits.
-    let previousGame: GameServer | null = null;
     if (req.query.previous !== undefined) {
       const prevId = ID.safeParse(req.query.previous);
       if (!prevId.success) {
         return res.status(400).json({ error: "Invalid previous game id" });
       }
-      previousGame = gm.game(prevId.data);
+      const previousGame = gm.game(prevId.data);
       if (previousGame === null) {
         return res.status(404).json({ error: "Previous game not found" });
       }
-      if (!previousGame.isCreator(creatorPersistentID)) {
+      // The game's host, or whoever will host its next lobby once the host
+      // has left it.
+      if (
+        !previousGame.isCreator(creatorPersistentID) &&
+        previousGame.successorCreator() !== creatorPersistentID
+      ) {
         return res.status(403).json({
           error: "Only the lobby creator can create a successor lobby",
         });
       }
-      // Reusing a lobby is a private-lobby feature: a public game's players
-      // never opted into following a host to another game.
-      if (previousGame.isPublic()) {
+      // Idempotent: a repeat request (e.g. a double click, or the lobby the
+      // game already opened when it was decided) returns that lobby.
+      const result = gm.createSuccessorLobby(previousGame);
+      if (result === "public") {
+        // Reusing a lobby is a private-lobby feature: a public game's
+        // players never opted into following a host to another game.
         return res
           .status(403)
           .json({ error: "Public games cannot spawn a successor lobby" });
       }
-      // Idempotent: a repeat request (e.g. a double click) reuses the already
-      // minted successor instead of creating another one.
-      const existingId = previousGame.successorLobby();
-      const existing = existingId !== null ? gm.game(existingId) : null;
-      if (existingId !== null && existing !== null) {
-        previousGame.setSuccessorLobby(existingId); // re-broadcast for late joiners
-        return res.json({
-          ...existing.gameInfo(),
-          workerIndex: workerId,
-          workerPath: ServerEnv.workerPath(existingId),
-        });
+      if (result === "no_id" || result === null) {
+        log.warn(`Failed to create successor lobby on worker ${workerId}`);
+        return res.status(500).json({ error: "Could not allocate game id" });
       }
-      // A recorded successor that no longer exists (already cleaned up) falls
-      // through and gets replaced by a fresh lobby.
+      return res.json({
+        ...result.game.gameInfo(),
+        workerIndex: workerId,
+        workerPath: ServerEnv.workerPath(result.game.id),
+      });
     }
 
     const id = ServerEnv.generateGameIdForWorker(workerId);
@@ -473,11 +478,6 @@ export async function startWorker() {
       log.warn(`cannot create game, id ${id} already exists`);
       return res.status(409).json({ error: "Game ID already exists" });
     }
-
-    // Tell the previous game about its successor: it remembers the id (for
-    // idempotency) and broadcasts it to everyone still connected. Done after
-    // creation so a failed creation never broadcasts a dead id.
-    previousGame?.setSuccessorLobby(id);
 
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     const clientIP = req.ip || req.socket.remoteAddress || "unknown";
@@ -633,6 +633,14 @@ export async function startWorker() {
   });
 
   registerPlayerProfileRoute({ app, log, baseDir: __dirname });
+
+  registerFriendRoutes({
+    app,
+    gm,
+    invites: lobbyService.invites,
+    socialView: () => lobbyService.socialView(),
+    log,
+  });
 
   registerAdminBotRoutes({ app, gm, workerId, log });
 

@@ -42,6 +42,7 @@ import "./components/InsufficientCurrencyDialog";
 import "./components/ListLobbyDialog";
 import { ListLobbyOptions } from "./components/ListLobbyDialog";
 import "./components/LobbyPlayerView";
+import "./components/FriendInvitePanel";
 import "./components/LobbyPresetControls";
 import "./components/PlutoniumIcon";
 import "./components/ToggleInputCard";
@@ -51,8 +52,10 @@ import { fetchCosmetics, InsufficientCurrency } from "./Cosmetics";
 import { gamePortal } from "./GamePortal";
 import {
   deleteLobbyPreset,
+  loadLobbyCarryover,
   LobbyPreset,
   LobbyPresetConfig,
+  saveLobbyCarryover,
   saveLobbyPreset,
 } from "./LobbyPresets";
 import { JoinLobbyEvent } from "./Main";
@@ -137,6 +140,8 @@ export class HostLobbyModal extends BaseModal {
   @state() private hostCheatStartingGold: boolean = false;
   @state() private hostCheatStartingGoldValue: number | undefined = undefined;
   @state() private lobbyCreatorClientID: string = "";
+  // Settings to restore once attached to the group's next lobby.
+  private pendingCarryover: LobbyPresetConfig | null = null;
   @state() private lobbyStartAt: number | null = null;
   @state() private serverTimeOffset: number = 0;
   // Whether this user may actually make the lobby public (the API's
@@ -185,6 +190,14 @@ export class HostLobbyModal extends BaseModal {
     const lobby = event.lobby;
     if (!this.lobbyId || lobby.gameID !== this.lobbyId) {
       return;
+    }
+    // Back in the group's lobby after a game: put the settings the group
+    // was playing with back on the form (and the server), now that the join
+    // has landed and a config update can reach it.
+    if (this.pendingCarryover !== null) {
+      const carry = this.pendingCarryover;
+      this.pendingCarryover = null;
+      void this.importPresetConfig(carry);
     }
     // A host returning to an existing lobby (?host) starts with default
     // settings; without this, their next change of any setting would send
@@ -824,6 +837,15 @@ export class HostLobbyModal extends BaseModal {
             @unit-toggle-changed=${this.handleConfigUnitToggleChanged}
           ></game-config-settings>
 
+          ${
+            this.lobbyId
+              ? html`<friend-invite-panel
+                  class="mt-10 block"
+                  .gameID=${this.lobbyId}
+                ></friend-invite-panel>`
+              : null
+          }
+
           <lobby-player-view
             class="mt-10"
             .gameMode=${this.gameMode}
@@ -954,6 +976,7 @@ export class HostLobbyModal extends BaseModal {
     const existingLobbyId =
       typeof args?.existingLobbyId === "string" ? args.existingLobbyId : null;
     if (existingLobbyId !== null) {
+      this.pendingCarryover = loadLobbyCarryover();
       this.attachToExistingLobby(existingLobbyId).catch(() => {
         // Clear clipboard so the host doesn't accidentally share a dead link,
         // matching the createLobby() failure path below.
@@ -1923,6 +1946,8 @@ export class HostLobbyModal extends BaseModal {
   };
 
   private async putGameConfig() {
+    // Remembered for this group's next lobby (see saveLobbyCarryover).
+    saveLobbyCarryover(this.exportPresetConfig());
     const spawnImmunityTicks = this.spawnImmunityDurationMinutes
       ? this.spawnImmunityDurationMinutes * 60 * 10
       : 0;

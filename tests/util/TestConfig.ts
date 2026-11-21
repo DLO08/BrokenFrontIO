@@ -1,4 +1,5 @@
 import { Tick, UnitType } from "@openfront/engine-api/game/GameTypes";
+import { BrokenfrontFeature } from "@openfront/engine-api/Schemas";
 import { NukeMagnitude } from "@openfront/engine-lib/configuration/Config";
 import {
   AttackLogicInput,
@@ -11,6 +12,12 @@ export class TestConfig extends EngineConfig {
   private _defaultNukeSpeed: number = 4;
   private _spawnImmunityDuration: number = 0;
   private _nationSpawnImmunityDuration: number = 0;
+
+  // Engine tests pin the classic ruleset: BrokenFront features are on only
+  // when a test sets them in gameConfig.brokenfront.
+  brokenfrontFeature(feature: BrokenfrontFeature): boolean {
+    return this.gameConfig().brokenfront?.[feature] ?? false;
+  }
 
   disableNavMesh(): boolean {
     return this.gameConfig().disableNavMesh ?? true;

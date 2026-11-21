@@ -4,6 +4,7 @@ import {
   PublicGameTypeSchema,
 } from "@openfront/shared/WireSchemas";
 import { z } from "zod";
+import { SocialReportSchema } from "./SocialSchemas";
 
 export type InternalGameInfo = z.infer<typeof InternalGameInfoSchema>;
 export type InternalPublicGames = z.infer<typeof InternalPublicGamesSchema>;
@@ -54,6 +55,9 @@ const WorkerLobbyListSchema = z.object({
   // when a draining server is empty. Optional for a worker build that
   // predates it; absent counts as zero.
   liveGames: z.number().int().min(0).optional(),
+  // Friend presence and lobby invites from this worker (FriendPresence.ts).
+  // Validated by the master; optional for an older worker build.
+  social: z.unknown().optional(),
 });
 
 const WorkerReadySchema = z.object({
@@ -90,6 +94,8 @@ const MasterLobbiesBroadcastSchema = z.object({
   // deployment learn to reload (see PublicLobbyFullSchema.active). Optional
   // only for old fixtures; the master always sends it, absent means active.
   active: z.boolean().optional(),
+  // Every worker's friend presence and invites, merged (FriendPresence.ts).
+  social: SocialReportSchema.optional(),
 });
 
 // Master sends a message to worker to schedule a new public game/lobby.

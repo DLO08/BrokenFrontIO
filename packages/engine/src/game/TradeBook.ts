@@ -1,11 +1,15 @@
-import { MessageType, PlayerID, Tick } from "@openfront/engine-api/game/GameTypes";
-import { TradeView } from "@openfront/engine-api/game/GameUpdates";
 import {
-  zInt,
-  zPlayerRef,
-} from "@openfront/engine-lib/snapshot/SnapshotType";
+  MessageType,
+  PlayerID,
+  Tick,
+} from "@openfront/engine-api/game/GameTypes";
+import { TradeView } from "@openfront/engine-api/game/GameUpdates";
+import { zInt, zPlayerRef } from "@openfront/engine-lib/snapshot/SnapshotType";
 import { z } from "zod";
-import type { SnapshotReader, SnapshotWriter } from "../snapshot/SnapshotContext";
+import type {
+  SnapshotReader,
+  SnapshotWriter,
+} from "../snapshot/SnapshotContext";
 import type { Game, Player } from "./Game";
 
 /**
@@ -310,7 +314,8 @@ export class TradeBook {
   /** Mid price in gold per unit of uranium. */
   marketPrice(): number {
     const raw = Math.floor(
-      (MARKET_BASE_PRICE * (1000 + MARKET_PRICE_STEP_PER_MILLE * this.netFlow)) /
+      (MARKET_BASE_PRICE *
+        (1000 + MARKET_PRICE_STEP_PER_MILLE * this.netFlow)) /
         1000,
     );
     return Math.max(MARKET_MIN_PRICE, Math.min(MARKET_MAX_PRICE, raw));
@@ -318,14 +323,18 @@ export class TradeBook {
 
   marketBuyPrice(amount: number): bigint {
     return (
-      (BigInt(this.marketPrice()) * BigInt(amount) * BigInt(100 + MARKET_SPREAD_PCT)) /
+      (BigInt(this.marketPrice()) *
+        BigInt(amount) *
+        BigInt(100 + MARKET_SPREAD_PCT)) /
       100n
     );
   }
 
   marketSellPrice(amount: number): bigint {
     return (
-      (BigInt(this.marketPrice()) * BigInt(amount) * BigInt(100 - MARKET_SPREAD_PCT)) /
+      (BigInt(this.marketPrice()) *
+        BigInt(amount) *
+        BigInt(100 - MARKET_SPREAD_PCT)) /
       100n
     );
   }
@@ -355,7 +364,10 @@ export class TradeBook {
 
   canCallToArms(p: Player): boolean {
     const last = this.callToArmsAt.get(p);
-    return last === undefined || this.mg.ticks() - last >= CALL_TO_ARMS_COOLDOWN_TICKS;
+    return (
+      last === undefined ||
+      this.mg.ticks() - last >= CALL_TO_ARMS_COOLDOWN_TICKS
+    );
   }
 
   recordCallToArms(p: Player): void {
@@ -429,8 +441,12 @@ export class TradeBook {
         other: id(ag.a === p ? ag.b : ag.a),
         expiresAt: ag.expiresAt,
       })),
-      incomingRequests: this.requests.filter((r) => r.to === p).map((r) => id(r.from)),
-      outgoingRequests: this.requests.filter((r) => r.from === p).map((r) => id(r.to)),
+      incomingRequests: this.requests
+        .filter((r) => r.to === p)
+        .map((r) => id(r.from)),
+      outgoingRequests: this.requests
+        .filter((r) => r.from === p)
+        .map((r) => id(r.to)),
       offers: this.offersFor(p).map((o) => ({
         id: o.id,
         from: id(o.from),

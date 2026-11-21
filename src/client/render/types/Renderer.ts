@@ -320,4 +320,6 @@ export interface RendererConfig {
    * arrive after construction (e.g. bots are created on tick 1).
    */
   maxPlayers?: number;
+  /** Uranium deposits (tile centres and radii), shown while placing a mine. */
+  uraniumDeposits?: { x: number; y: number; r: number }[];
 }

@@ -1,9 +1,15 @@
 import { MAX_USERNAME_LENGTH } from "@openfront/engine-api/Schemas";
+import {
+  containsProfanity,
+  maskHateSpeech,
+  maskProfanity,
+} from "@openfront/shared/ProfanityFilter";
 import { describe, expect, test } from "vitest";
 import {
   censorPlayer,
   profanityMatcher,
   shadowNames,
+  unshadowApiName,
 } from "../../src/server/Censor";
 
 describe("Censor (local fallback)", () => {
@@ -97,9 +103,38 @@ describe("Censor (local fallback)", () => {
       expect(profanityMatcher.hasMatch("hello n.i.g.g.e.r world")).toBe(true);
     });
 
-    test("censorPlayer replaces period-separated slur usernames", () => {
-      const result = censorPlayer("n.i.g.g.e.r", null);
-      expect(shadowNames).toContain(result.username);
+    test("censorPlayer masks period-separated slur usernames", () => {
+      const masked = censorPlayer("n.i.g.g.e.r", null).username;
+      expect(masked).not.toMatch(/[a-z]/i);
+      expect(masked).toContain("*");
+    });
+  });
+
+  describe("masking", () => {
+    test("masks only the matched letters", () => {
+      expect(maskHateSpeech("xhitlerx")).toBe("x******x");
+      expect(maskProfanity("IloveNazi")).toBe("Ilove****");
+    });
+
+    test("keeps spaces inside a masked span", () => {
+      expect(maskHateSpeech("hi n i g g e r")).toBe("hi * * * * * *");
+    });
+
+    test("masks kkk", () => {
+      expect(maskHateSpeech("ilovekkkboys")).toBe("ilove***boys");
+    });
+
+    test("leaves general profanity to the viewer tier", () => {
+      expect(maskHateSpeech("fuck")).toBe("fuck");
+      expect(maskProfanity("fuck")).toBe("****");
+      expect(containsProfanity("fuck")).toBe(true);
+    });
+
+    test("leaves clean names alone", () => {
+      for (const name of ["CoolPlayer", "José", "snigger"]) {
+        expect(maskProfanity(name), name).toBe(name);
+        expect(containsProfanity(name), name).toBe(false);
+      }
     });
   });
 
@@ -109,20 +144,29 @@ describe("Censor (local fallback)", () => {
       expect(censorPlayer("GameMaster", null).username).toBe("GameMaster");
     });
 
-    test("replaces profane usernames with a shadow name", () => {
-      const result = censorPlayer("hitler", null);
-      expect(shadowNames).toContain(result.username);
+    test("never hands out a made-up name", () => {
+      for (const name of ["hitler", "h1tl3r", "nigger", "fuck", "faggot"]) {
+        expect(shadowNames, name).not.toContain(
+          censorPlayer(name, null).username,
+        );
+      }
     });
 
-    test("replaces leet speak profane usernames with a shadow name", () => {
-      const result = censorPlayer("h1tl3r", null);
-      expect(shadowNames).toContain(result.username);
+    test("masks hate terms for everyone", () => {
+      expect(censorPlayer("hitler", null).username).toBe("******");
+      expect(censorPlayer("h1tl3r", null).username).toBe("******");
+      expect(censorPlayer("xXhitlerXx", null).username).toBe("xX******Xx");
+    });
+
+    test("passes general profanity through for the viewer's filter", () => {
+      // The client masks this unless the viewer has turned the filter off.
+      expect(censorPlayer("fuck", null).username).toBe("fuck");
     });
 
     test("preserves clean clan tag when username is profane", () => {
       const result = censorPlayer("hitler", "COOL");
       expect(result.clanTag).toBe("COOL");
-      expect(shadowNames).toContain(result.username);
+      expect(result.username).toBe("******");
     });
 
     describe("clan tag censoring", () => {
@@ -130,6 +174,7 @@ describe("Censor (local fallback)", () => {
         expect(censorPlayer("CoolPlayer", "NAZI").clanTag).toBeNull();
         expect(censorPlayer("CoolPlayer", "ADOLF").clanTag).toBeNull();
         expect(censorPlayer("CoolPlayer", "HEIL").clanTag).toBeNull();
+        expect(censorPlayer("CoolPlayer", "NAZI").username).toBe("CoolPlayer");
       });
 
       test("removes clan tag that is a slur abbreviation", () => {
@@ -153,6 +198,10 @@ describe("Censor (local fallback)", () => {
         expect(censorPlayer("CoolPlayer", "HEILS").clanTag).toBeNull();
       });
 
+      test("removes a general-profanity clan tag too", () => {
+        expect(censorPlayer("Player", "FUCK").clanTag).toBeNull();
+      });
+
       test("removes [SS] clan tag", () => {
         expect(censorPlayer("Player", "SS").clanTag).toBeNull();
         expect(censorPlayer("Player", "ss").clanTag).toBeNull();
@@ -164,107 +213,47 @@ describe("Censor (local fallback)", () => {
 
       test("keeps clean clan tag when username is clean", () => {
         expect(censorPlayer("Player", "COOL").clanTag).toBe("COOL");
-        expect(censorPlayer("Player", "PRO").clanTag).toBe("PRO");
+        expect(censorPlayer("Player", "pro").clanTag).toBe("PRO");
       });
 
-      test("keeps clean clan tag, censors profane username", () => {
-        const result = censorPlayer("nigger", "COOL");
-        expect(result.clanTag).toBe("COOL");
-        expect(shadowNames).toContain(result.username);
-      });
-
-      test("removes profane clan tag and censors profane username", () => {
+      test("removes profane clan tag and masks profane username", () => {
         const result = censorPlayer("hitler", "NAZI");
         expect(result.clanTag).toBeNull();
-        expect(shadowNames).toContain(result.username);
-      });
-
-      test("removes profane clan tag and censors leet speak username", () => {
-        const result = censorPlayer("h1tl3r", "N4Z1");
-        expect(result.clanTag).toBeNull();
-        expect(shadowNames).toContain(result.username);
-      });
-
-      test("removes profane clan tag with slur, censors profane username", () => {
-        const result = censorPlayer("nigger", "NIG");
-        expect(result.clanTag).toBeNull();
-        expect(shadowNames).toContain(result.username);
+        expect(result.username).toBe("******");
       });
 
       describe("clan tag + username combined forms a slur", () => {
-        test("censors when clan+name combined forms hitler", () => {
-          const result = censorPlayer("LER", "HIT");
-          expect(shadowNames).toContain(result.username);
-          expect(result.clanTag).toBeNull();
-        });
+        test.each([
+          ["HIT", "LER", "***"],
+          ["HI", "TLER", "****"],
+          ["AD", "OLF", "***"],
+          ["NIG", "ger", "***"],
+          ["NI", "gger", "****"],
+          ["N1G", "g3r", "***"],
+        ])(
+          "tag %s + name %s drops the tag and masks the name part",
+          (tag, name, masked) => {
+            const result = censorPlayer(name, tag);
+            expect(result.clanTag).toBeNull();
+            expect(result.username).toBe(masked);
+          },
+        );
 
-        test("censors when clan+name combined forms hitler (split differently)", () => {
-          const result = censorPlayer("TLER", "HI");
-          expect(shadowNames).toContain(result.username);
-          expect(result.clanTag).toBeNull();
-        });
-
-        test("censors when clan+name combined forms adolf", () => {
-          const result = censorPlayer("OLF", "AD");
-          expect(shadowNames).toContain(result.username);
-          expect(result.clanTag).toBeNull();
-        });
-
-        test("censors when clan+name combined forms nigger", () => {
-          const result = censorPlayer("ger", "NIG");
-          expect(shadowNames).toContain(result.username);
-          expect(result.clanTag).toBeNull();
-        });
-
-        test("censors when clan+name combined forms nigger (clean parts)", () => {
-          const result = censorPlayer("gger", "NI");
-          expect(shadowNames).toContain(result.username);
-          expect(result.clanTag).toBeNull();
-        });
-
-        test("censors leet speak combined across clan and name", () => {
-          const result = censorPlayer("g3r", "N1G");
-          expect(shadowNames).toContain(result.username);
-          expect(result.clanTag).toBeNull();
+        test("only the part of the name inside the word is masked", () => {
+          expect(censorPlayer("lerFan", "HIT").username).toBe("***Fan");
         });
       });
     });
 
-    test("returns deterministic shadow name for same input", () => {
-      const a = censorPlayer("hitler", null);
-      const b = censorPlayer("hitler", null);
-      expect(a.username).toBe(b.username);
-    });
-
-    test("handles username with no clan tag", () => {
-      expect(censorPlayer("NormalPlayer", null).username).toBe("NormalPlayer");
-    });
-
-    test("catches englishDataset profanity beyond the static banned words", () => {
-      const result = censorPlayer("fuck", null);
-      expect(shadowNames).toContain(result.username);
-    });
-
     // The free-form username charset widened to Latin-1 Supplement and Latin
-    // Extended-A so accented Steam personas stop falling back to a guest name.
-    // That must not hand anyone a new way past the filter: resolveConfusables
-    // folds these back to their ASCII letters before matching.
-    //
-    // Scope is accent substitution only. Inserting a letter ("Haitler") still
-    // evades, but it evades identically in plain ASCII — that is a property of
-    // the word list, not something the wider charset introduced.
+    // Extended-A. resolveConfusables folds these back to their ASCII letters
+    // before matching, so accents are no way past the filter.
     test("accented spellings do not bypass the filter", () => {
-      for (const name of [
-        "hïtler",
-        "nâzi",
-        "fàggot",
-        "retàrd",
-        "níggér",
-        "FÜCK",
-      ]) {
+      for (const name of ["hïtler", "nâzi", "fàggot", "retàrd", "níggér"]) {
         expect(profanityMatcher.hasMatch(name), name).toBe(true);
-        expect(shadowNames, name).toContain(censorPlayer(name, null).username);
+        expect(censorPlayer(name, null).username, name).toMatch(/^\*+$/);
       }
+      expect(maskProfanity("FÜCK")).toBe("****");
     });
 
     test("still leaves ordinary accented names alone", () => {
@@ -279,6 +268,33 @@ describe("Censor (local fallback)", () => {
       const res = censorPlayer(longName, null);
       expect(res.username).toBe("a".repeat(MAX_USERNAME_LENGTH));
       expect(res.username.length).toBe(MAX_USERNAME_LENGTH);
+    });
+  });
+
+  describe("unshadowApiName", () => {
+    // The API's pick for a flagged name: the one shadow name that
+    // unshadowApiName recognises as the replacement for it.
+    const shadowFor = (name: string) =>
+      shadowNames.find((s) => unshadowApiName(name, s, "LOCAL") !== s);
+
+    test("swaps the API's made-up name for the locally masked one", () => {
+      const api = shadowFor("hitler")!;
+      expect(api).toBeDefined();
+      expect(unshadowApiName("hitler", api, "******")).toBe("******");
+    });
+
+    test("masks the whole name when only the API flagged it", () => {
+      const api = shadowFor("SomeNovelWord")!;
+      expect(unshadowApiName("SomeNovelWord", api, "SomeNovelWord")).toBe(
+        "*************",
+      );
+    });
+
+    test("keeps any other API answer", () => {
+      expect(unshadowApiName("CoolPlayer", "CoolPlayer", "CoolPlayer")).toBe(
+        "CoolPlayer",
+      );
+      expect(unshadowApiName("cool", "Cool", "cool")).toBe("Cool");
     });
   });
 });

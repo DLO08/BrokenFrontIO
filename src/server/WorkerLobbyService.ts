@@ -12,6 +12,7 @@ import {
 import { encodeLobbyMessage } from "@openfront/shared/ZbinWire";
 import http from "http";
 import { WebSocket, WebSocketServer } from "ws";
+import { buildSocialReport, FriendInvites } from "./FriendPresence";
 import { GameManager } from "./GameManager";
 import {
   InternalGameInfo,
@@ -22,6 +23,7 @@ import {
 } from "./IPCBridgeSchema";
 import { logger } from "./Logger";
 import { ServerEnv } from "./ServerEnv";
+import { EMPTY_SOCIAL, type SocialReport } from "./SocialSchemas";
 
 // The game config advertised for a listed private lobby: everything the
 // host configured minus host-only fields. The server already rejects
@@ -59,6 +61,10 @@ export class WorkerLobbyService {
   // ranked check-in loop so a draining server stops offering matches too
   // (RankedCheckin.ts, OPE-469).
   private deploymentActive = true;
+  // The master's merged friend presence / invites for every worker.
+  private clusterSocial: SocialReport = EMPTY_SOCIAL;
+  // Lobby invites sent from this worker's lobbies.
+  public readonly invites = new FriendInvites();
 
   constructor(
     private readonly server: http.Server,
@@ -82,6 +88,28 @@ export class WorkerLobbyService {
    */
   isDeploymentActive(): boolean {
     return this.deploymentActive;
+  }
+
+  /**
+   * Friend presence and invites across this server: the master's last
+   * broadcast, with this worker's own games taken from a fresh local report
+   * instead (the broadcast lags by up to a round-trip, and an invite just
+   * sent from here must show up straight away).
+   */
+  socialView(): SocialReport {
+    const own = buildSocialReport(this.gm, this.invites);
+    const ownGames = new Set((this.gm.allGames?.() ?? []).map((g) => g.id));
+    const ownInvites = new Set(own.invites.map((i) => i.id));
+    return {
+      presence: [
+        ...this.clusterSocial.presence.filter((e) => !ownGames.has(e.gameID)),
+        ...own.presence,
+      ],
+      invites: [
+        ...this.clusterSocial.invites.filter((i) => !ownInvites.has(i.id)),
+        ...own.invites,
+      ],
+    };
   }
 
   /** Browsers currently connected to this worker's /lobbies socket. */
@@ -134,6 +162,7 @@ export class WorkerLobbyService {
           this.lastFullGameIds = null;
         }
         this.lastPublicGames = msg.publicGames;
+        this.clusterSocial = msg.social ?? EMPTY_SOCIAL;
         // Forward message to all clients
         this.broadcastLobbiesToClients(msg.publicGames);
         // Update master with my lobby info
@@ -237,6 +266,7 @@ export class WorkerLobbyService {
       type: "lobbyList",
       lobbies: [...publicLobbies, ...hostedLobbies],
       liveGames: this.gm.activeGames(),
+      social: buildSocialReport(this.gm, this.invites),
     } satisfies WorkerLobbyList);
   }
 

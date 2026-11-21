@@ -572,11 +572,7 @@ export class ClanManageView extends LitElement {
     return html`
       <div
         class="flex flex-col py-2.5 px-3 rounded-xl border
-        ${
-          isMe
-            ? "bg-brand/10 border-brand/20"
-            : "bg-white/5 border-white/10"
-        }"
+        ${isMe ? "bg-brand/10 border-brand/20" : "bg-white/5 border-white/10"}"
       >
         <div class="flex items-center flex-wrap gap-1.5">
           <div

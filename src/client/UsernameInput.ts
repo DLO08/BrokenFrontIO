@@ -1,4 +1,8 @@
 import { UserMeResponse } from "@openfront/shared/ApiSchemas";
+import {
+  containsProfanity,
+  maskProfanity,
+} from "@openfront/shared/ProfanityFilter";
 import { sanitizeClanTag } from "@openfront/shared/SharedUtil";
 import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
@@ -173,6 +177,8 @@ export class UsernameInput extends LitElement {
   private readonly onSteam = steamSDK.isOnSteam();
 
   @property({ type: String }) validationError: string = "";
+  // The typed name contains something the profanity filter will mask.
+  @state() private profanityNotice: boolean = false;
   // Ownership-check feedback (i18n key) shown inline beneath the tag input. Only
   // "not a member" gates the buttons (see emitValidity); the rest is advisory.
   @state() private clanTagOwnershipError: string = "";
@@ -856,6 +862,7 @@ export class UsernameInput extends LitElement {
       ${
         this.validationError ||
         this.clanTagOwnershipError ||
+        this.profanityNotice ||
         this.claimGraceVisible()
           ? html`<div
               class="absolute top-full left-0 z-50 w-full sm:w-auto sm:max-w-[calc((100%-1rem)*2/3)] lg:group-has-[.streaming-live]/strip:max-w-full mt-1 flex flex-col gap-1 items-start"
@@ -872,7 +879,7 @@ export class UsernameInput extends LitElement {
                     ? this.renderClanTagOwnershipError()
                     : null
               }
-              ${this.renderClaimGrace()}
+              ${this.renderProfanityNotice()} ${this.renderClaimGrace()}
             </div>`
           : null
       }
@@ -888,6 +895,23 @@ export class UsernameInput extends LitElement {
   // stacks under any validation error rather than replacing it — a player
   // mid-edit on an invalid name is exactly who still needs to know their
   // reserved name is expiring. Positioning lives on the shared wrapper.
+  // A heads-up, not an error: a name with profanity in it is still playable,
+  // but other players see those letters as *** (hate terms for everyone,
+  // other profanity for anyone with the filter on). Amber, like the claim
+  // reminder, because nothing blocks play.
+  private renderProfanityNotice() {
+    if (!this.profanityNotice || this.validationError) return null;
+    return html`<div
+      id="username-profanity-notice"
+      role="status"
+      class="w-full sm:w-auto px-3 py-2 text-sm font-medium border border-amber-500/50 rounded-lg bg-amber-900/90 text-amber-100 backdrop-blur-md shadow-lg"
+    >
+      ${translateText("username.profanity_notice", {
+        preview: maskProfanity(this.baseUsername.trim()),
+      })}
+    </div>`;
+  }
+
   private claimGraceVisible(): boolean {
     const grace = this.claimGrace;
     return (
@@ -1331,6 +1355,12 @@ export class UsernameInput extends LitElement {
     // through an emptied field to the persona or a generated name, and play
     // must stay blocked until the player puts a name back.
     const trimmedBase = this.baseUsername.trim();
+    // Only the free-form name: the verified account name was screened by
+    // the API when it was claimed.
+    this.profanityNotice =
+      !this.verifiedActive &&
+      trimmedBase.length > 0 &&
+      containsProfanity(trimmedBase);
 
     const clanTagResult = validateClanTag(this.clanTag);
     if (!clanTagResult.isValid) {

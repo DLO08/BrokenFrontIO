@@ -10,6 +10,7 @@ import { RetreatExecution } from "@openfront/engine/execution/RetreatExecution";
 import { SpawnExecution } from "@openfront/engine/execution/SpawnExecution";
 import { TradeShipExecution } from "@openfront/engine/execution/TradeShipExecution";
 import { TransportShipExecution } from "@openfront/engine/execution/TransportShipExecution";
+import { TroopColumnExecution } from "@openfront/engine/execution/TroopColumnExecution";
 import { WarshipExecution } from "@openfront/engine/execution/WarshipExecution";
 import { Game, Player } from "@openfront/engine/game/Game";
 import { setup } from "../../util/Setup";
@@ -301,4 +302,28 @@ describe("snapshot: trains", () => {
     executeTicks(game, 400);
     await expectSnapshotRoundTrip(game, MAP, 80);
   }, 60_000);
+});
+
+describe("snapshot: troop columns through allied land", () => {
+  const MAP = "plains";
+
+  test("marching, then turning into a bridgehead attack", async () => {
+    const game = await setup(
+      MAP,
+      { brokenfront: { alliedTransit: true } },
+      humans("a", "b", "c"),
+    );
+    const a = game.player("a");
+    const b = game.player("b");
+    const c = game.player("c");
+    conquerRect(game, a, 0, 0, 20, 40);
+    conquerRect(game, b, 20, 0, 60, 40);
+    conquerRect(game, c, 60, 0, 90, 40);
+    a.addTroops(50_000);
+    a.createAllianceRequest(b)!.accept();
+    game.addExecution(new TroopColumnExecution(a, game.ref(65, 20), 20_000));
+    executeTicks(game, 6);
+    expect(a.units(UnitType.TroopColumn)).toHaveLength(1);
+    await expectSnapshotRoundTrip(game, MAP, 40);
+  });
 });

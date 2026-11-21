@@ -189,7 +189,8 @@ export class ClusterNukeExecution implements Execution {
     for (let k = 0; k < ringCount; k++) {
       const [dx, dy] =
         RING_DIRECTIONS[(rotation + k * step) % RING_DIRECTIONS.length];
-      const r = spread + rand.nextInt(-RING_RADIUS_JITTER, RING_RADIUS_JITTER + 1);
+      const r =
+        spread + rand.nextInt(-RING_RADIUS_JITTER, RING_RADIUS_JITTER + 1);
       const x = Math.max(
         0,
         Math.min(this.mg.width() - 1, cx + Math.trunc((dx * r) / 1000)),

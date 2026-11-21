@@ -37,6 +37,13 @@ const atomBombIcon = assetUrl("images/NukeIconWhite.svg");
 const portIcon = assetUrl("images/PortIcon.svg");
 const samlauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 const shieldIcon = assetUrl("images/ShieldIconWhite.svg");
+const uraniumMineIcon = assetUrl("images/UraniumMineIconWhite.svg");
+const oilRigIcon = assetUrl("images/OilRigIconWhite.svg");
+const airbaseIcon = assetUrl("images/AirbaseIconWhite.svg");
+const carrierIcon = assetUrl("images/CarrierIconWhite.svg");
+const largeNukeIcon = assetUrl("images/LargeNukeIconWhite.svg");
+const clusterNukeIcon = assetUrl("images/ClusterNukeIconWhite.svg");
+const uraniumIcon = assetUrl("images/UraniumIcon.svg");
 
 export interface BuildItemDisplay {
   unitType: PlayerBuildableUnitType;
@@ -116,6 +123,51 @@ const buildTable: BuildItemDisplay[][] = [
       icon: factoryIcon,
       description: "build_menu.desc.factory",
       key: "unit_type.factory",
+      countable: true,
+    },
+  ],
+  // BrokenFront: second-tier nukes, sea economy, air power, uranium.
+  [
+    {
+      unitType: UnitType.LargeNuke,
+      icon: largeNukeIcon,
+      description: "build_menu.desc.large_nuke",
+      key: "unit_type.large_nuke",
+      countable: false,
+    },
+    {
+      unitType: UnitType.ClusterNuke,
+      icon: clusterNukeIcon,
+      description: "build_menu.desc.cluster_nuke",
+      key: "unit_type.cluster_nuke",
+      countable: false,
+    },
+    {
+      unitType: UnitType.UraniumMine,
+      icon: uraniumMineIcon,
+      description: "build_menu.desc.uranium_mine",
+      key: "unit_type.uranium_mine",
+      countable: true,
+    },
+    {
+      unitType: UnitType.OilRig,
+      icon: oilRigIcon,
+      description: "build_menu.desc.oil_rig",
+      key: "unit_type.oil_rig",
+      countable: true,
+    },
+    {
+      unitType: UnitType.Airbase,
+      icon: airbaseIcon,
+      description: "build_menu.desc.airbase",
+      key: "unit_type.airbase",
+      countable: true,
+    },
+    {
+      unitType: UnitType.AircraftCarrier,
+      icon: carrierIcon,
+      description: "build_menu.desc.aircraft_carrier",
+      key: "unit_type.aircraft_carrier",
       countable: true,
     },
   ],
@@ -374,6 +426,13 @@ export class BuildMenu extends LitElement implements Controller {
     return 0n;
   }
 
+  public uraniumCost(item: BuildItemDisplay): number {
+    return (
+      this.playerBuildables?.find((bu) => bu.type === item.unitType)
+        ?.uraniumCost ?? 0
+    );
+  }
+
   public count(item: BuildItemDisplay): string {
     const player = this.game?.myPlayer();
     if (!player) {
@@ -394,7 +453,9 @@ export class BuildMenu extends LitElement implements Controller {
     } else if (buildableUnit.canBuild !== false) {
       const rocketDirectionUp =
         buildableUnit.type === UnitType.AtomBomb ||
-        buildableUnit.type === UnitType.HydrogenBomb
+        buildableUnit.type === UnitType.HydrogenBomb ||
+        buildableUnit.type === UnitType.LargeNuke ||
+        buildableUnit.type === UnitType.ClusterNuke
           ? this.uiState.rocketDirectionUp
           : undefined;
       this.eventBus.emit(
@@ -458,6 +519,18 @@ export class BuildMenu extends LitElement implements Controller {
                         height="12"
                         class="align-middle"
                       />
+                      ${
+                        this.uraniumCost(item) > 0
+                          ? html` + ${this.uraniumCost(item)}
+                              <img
+                                src=${uraniumIcon}
+                                alt="uranium"
+                                width="12"
+                                height="12"
+                                class="align-middle"
+                              />`
+                          : ""
+                      }
                     </span>
                     ${
                       item.countable

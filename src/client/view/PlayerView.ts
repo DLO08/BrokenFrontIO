@@ -19,6 +19,7 @@ import {
   AllianceView,
   AttackUpdate,
   PlayerUpdate,
+  TradeView,
 } from "@openfront/engine-api/game/GameUpdates";
 import { PlayerLike } from "@openfront/engine-api/game/ReadViews";
 import { ClientID } from "@openfront/engine-api/Schemas";
@@ -27,8 +28,8 @@ import { createRandomName } from "@openfront/shared/SharedUtil";
 import { PlayerCosmetics } from "@openfront/shared/WireSchemas";
 import { Colord, colord } from "colord";
 import { base64url } from "jose";
-import { PlayerState, PlayerStatic, PlayerTypeEnum } from "../render/types";
 import { filterName } from "../NameFilter";
+import { PlayerState, PlayerStatic, PlayerTypeEnum } from "../render/types";
 import { themeProvider } from "../theme/ThemeProvider";
 import { UserSettings } from "../UserSettings";
 import { type CosmeticOwner, visibleCosmetics } from "./CosmeticVisibility";
@@ -79,6 +80,7 @@ export class PlayerView implements PlayerLike {
     public readonly equippedCosmetics: PlayerCosmetics,
   ) {
     this.state = playerStateFromUpdate(data);
+    this._trade = data.trade;
     // Respect the client-side "Disable emojis" setting: when off, never surface
     // emoji data to any renderer/overlay that reads this shared state (#4430).
     if (!userSettings.emojis()) {
@@ -216,6 +218,7 @@ export class PlayerView implements PlayerLike {
    */
   applyUpdate(pu: PlayerUpdate): void {
     applyStateUpdate(this.state, pu);
+    if (pu.trade !== undefined) this._trade = pu.trade;
     // applyStateUpdate refreshes outgoingEmojis every tick; re-apply the
     // "Disable emojis" setting so live emojis stay hidden when it's off (#4430).
     if (!userSettings.emojis()) {
@@ -479,6 +482,15 @@ export class PlayerView implements PlayerLike {
   /** Cumulative piracy revenue: captured-ship payouts. */
   piracyGold(): number {
     return this.state.piracyGold;
+  }
+
+  /**
+   * BrokenFront trade state (agreements, offers, tariff, market price). Kept
+   * off the renderer's PlayerState: only the HUD reads it.
+   */
+  private _trade: TradeView | undefined;
+  trade(): TradeView | undefined {
+    return this._trade;
   }
 
   /** Uranium held, spent on nuke launches. */

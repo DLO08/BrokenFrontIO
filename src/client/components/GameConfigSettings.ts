@@ -28,8 +28,7 @@ import "./DifficultyInfo";
 import "./FluentSlider";
 import "./map/MapPicker";
 
-const ACTIVE_CARD =
-  "bg-brand/20 border-brand/50 shadow-[var(--shadow-brand)]";
+const ACTIVE_CARD = "bg-brand/20 border-brand/50 shadow-[var(--shadow-brand)]";
 const INACTIVE_CARD =
   "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20";
 
@@ -119,6 +118,23 @@ const unitOptions: { type: UnitType; translationKey: string }[] = [
   { type: UnitType.HydrogenBomb, translationKey: "unit_type.hydrogen_bomb" },
   { type: UnitType.MIRV, translationKey: "unit_type.mirv" },
   { type: UnitType.Factory, translationKey: "unit_type.factory" },
+  // BrokenFront. Disabling the mine also turns uranium costs off.
+  { type: UnitType.UraniumMine, translationKey: "unit_type.uranium_mine" },
+  { type: UnitType.LargeNuke, translationKey: "unit_type.large_nuke" },
+  { type: UnitType.ClusterNuke, translationKey: "unit_type.cluster_nuke" },
+  { type: UnitType.OilRig, translationKey: "unit_type.oil_rig" },
+  { type: UnitType.FishingBoat, translationKey: "unit_type.fishing_boat" },
+  { type: UnitType.Airbase, translationKey: "unit_type.airbase" },
+  {
+    type: UnitType.AircraftCarrier,
+    translationKey: "unit_type.aircraft_carrier",
+  },
+  { type: UnitType.Bomber, translationKey: "unit_type.bomber" },
+  {
+    type: UnitType.TransportPlane,
+    translationKey: "unit_type.transport_plane",
+  },
+  { type: UnitType.TroopColumn, translationKey: "unit_type.troop_column" },
 ];
 
 const MAP_ICON = svg`<path

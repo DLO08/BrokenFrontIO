@@ -205,15 +205,21 @@
   },
   "build_menu": {
     "desc": {
+      "airbase": "Launches fighters, bombers and paratroopers.",
+      "aircraft_carrier": "A mobile airbase at sea. Built from a port.",
       "atom_bomb": "Small explosion",
       "city": "Increases max population",
+      "cluster_nuke": "Five atom-sized warheads for the price of three. Needs a level 2 silo.",
       "defense_post": "Increases defenses of nearby borders",
       "factory": "Creates railroads and spawns trains",
       "hydrogen_bomb": "Large explosion",
+      "large_nuke": "A bigger blast than an atom bomb. Costs uranium.",
       "mirv": "Huge explosion, only targets selected player",
       "missile_silo": "Used to launch nukes",
+      "oil_rig": "Offshore, near your coast. Pumps gold over time.",
       "port": "Sends trade ships to generate gold",
       "sam_launcher": "Defends against incoming nukes",
+      "uranium_mine": "Build on a uranium deposit. Mines uranium for nukes.",
       "warship": "Captures trade ships, destroys ships and boats"
     },
     "not_enough_money": "Not enough money",
@@ -990,7 +996,8 @@
     "attack_ratio_button": "Attack ratio: {percent}%",
     "low_troops_warning": "You are very low on troops - You should always keep some troops for defense.",
     "teammate_afk_neighbor_info": "You can attack disconnected teammates.",
-    "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself."
+    "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself.",
+    "uranium": "Uranium"
   },
   "cosmetics": {
     "adfree": "ad-free for life!",
@@ -1233,6 +1240,7 @@
   "events_display": {
     "about_to_expire": "Your alliance with {name} is about to expire!",
     "accept_alliance": "Accept",
+    "air_raid_inbound": "{name} - air raid inbound",
     "alliance_accepted": "accepted",
     "alliance_expired": "Your alliance with {name} expired",
     "alliance_nukes_destroyed_incoming": "{count, plural, one {# nuke launched by {name} was destroyed due to the alliance} other {# nukes launched by {name} were destroyed due to the alliance}}",
@@ -1249,6 +1257,8 @@
     "betrayal_debuff_ends": "{time} seconds left until betrayal debuff ends",
     "betrayal_description": "You broke your alliance with {name}, making you a TRAITOR ({malusPercent}% defense debuff for {durationText})",
     "betrayed_you": "{name} broke their alliance with you",
+    "call_to_arms": "{name} calls you to arms against {target}",
+    "cluster_nuke_inbound": "{name} - cluster nuke inbound",
     "conquered_no_gold": "Conquered {name} (didn't play, no gold awarded)",
     "duration_second": "1 second",
     "duration_seconds_plural": "{seconds} seconds",
@@ -1257,15 +1267,19 @@
     "hydrogen_bomb_inbound": "{name} - hydrogen bomb inbound",
     "hydrogen_bomb_inbound_count": "{name} - {count, plural, other {# hydrogen bombs}} inbound",
     "ignore": "Ignore",
+    "large_nuke_detonated": "{name} detonated a large nuke on your territory",
+    "large_nuke_inbound": "{name} - large nuke inbound",
     "mirv_inbound": "⚠️⚠️⚠️ {name} - MIRV INBOUND ⚠️⚠️⚠️",
     "mirv_inbound_count": "⚠️⚠️⚠️ {name} - {count, plural, other {# MIRVS}} INBOUND ⚠️⚠️⚠️",
     "missile_intercepted": "SAM intercepted {unit}",
     "naval_invasion_inbound": "Naval invasion incoming from {name} ({troops})",
     "no_boats_available": "No boats available, max {max}",
+    "paratroopers_inbound": "{name} - paratroopers inbound",
     "received_gold_from_captured_ship": "Received {gold} gold from ship captured from {name}",
     "received_gold_from_conquest": "Conquered {name}, received {gold} gold",
     "received_gold_from_player": "Received {gold} gold from {name}",
     "received_troops_from_player": "Received {troops} troops from {name}",
+    "received_uranium": "Received {amount} uranium from {name}",
     "reject_alliance": "Reject",
     "renew_alliance": "Request to renew",
     "request_alliance": "{name} requests an alliance!",
@@ -1274,7 +1288,15 @@
     "sent_emoji_all": "Sent everyone: {emoji}",
     "sent_gold_to_player": "Sent {gold} gold to {name}",
     "sent_troops_to_player": "Sent {troops} troops to {name}",
+    "trade_agreement_ended": "Trade agreement with {name} ended",
+    "trade_agreement_expired": "Trade agreement with {name} expired",
+    "trade_agreement_request": "{name} proposes a trade agreement",
+    "trade_agreement_signed": "Trade agreement signed with {name}",
+    "trade_offer_accepted": "{name} accepted your trade offer",
+    "trade_offer_received": "{name} sent you a trade offer",
     "trade_ship_captured": "Your trade ship was captured by {name}",
+    "troop_column_inbound": "{name} - troops marching through allied land",
+    "troop_column_turned_back": "Your troop column lost its corridor and turned back",
     "unit_destroyed": "Your {unit} was destroyed",
     "unit_voluntarily_deleted": "Unit voluntarily deleted",
     "wants_to_renew_alliance": "{name} wants to renew your alliance"
@@ -1335,6 +1357,15 @@
     "licence_verified_name": "Your verified username",
     "ranked": "Ranked play"
   },
+  "friend_invite": {
+    "failed": "Could not send the invite. Please try again.",
+    "in_lobby": "In this lobby",
+    "invite": "Invite",
+    "invited": "Invited",
+    "not_friend": "You can only invite friends.",
+    "sent": "Invite sent to {name}",
+    "title": "Invite friends"
+  },
   "friends": {
     "accept": "Accept",
     "add_friend": "Add Friend",
@@ -1364,6 +1395,22 @@
     "team_info": "Friends are placed on the same team.",
     "withdraw": "Withdraw",
     "your_friends": "Your Friends"
+  },
+  "friends_page": {
+    "dismiss": "Dismiss",
+    "invite_from": "{name} invited you to their lobby",
+    "invites": "Lobby invites",
+    "join": "Join",
+    "nobody_playing": "None of your friends are playing right now.",
+    "playing_now": "Playing now",
+    "playing_now_hint": "Friends in a game on this server. Join their private lobby to play together.",
+    "sign_in": "Sign in to add friends, see where they are playing and join their lobbies.",
+    "status_hosting": "Hosting a lobby",
+    "status_in_game": "In a game",
+    "status_in_lobby": "In a lobby",
+    "status_next_lobby": "Finishing a game — their next lobby is open",
+    "status_unavailable": "Could not reach the game server to see where your friends are.",
+    "title": "Friends"
   },
   "fullscreen": {
     "enter": "Enter fullscreen",
@@ -1871,6 +1918,7 @@
     "copyright": "© BrokenFront and Contributors",
     "create": "Create Lobby",
     "discord_avatar_alt": "Discord profile avatar",
+    "friends": "Friends",
     "github": "GitHub",
     "go_to_troubleshooting": "Go to our troubleshooting page",
     "help": "Help",
@@ -2264,10 +2312,12 @@
   },
   "new_lobby_prompt": {
     "confirm": "Start a new lobby? All players will be invited to join.",
-    "dismiss": "Dismiss",
     "failed": "Could not create a new lobby. Please try again.",
-    "join": "Join",
-    "message": "Host started a new lobby"
+    "join": "Back to lobby",
+    "leave": "Leave group",
+    "message": "Your group's next lobby is ready",
+    "returning": "Back to the lobby in {seconds}s",
+    "stay": "Stay here"
   },
   "news": {
     "title": "Release Notes"
@@ -2440,6 +2490,7 @@
     "trains": "Trains",
     "trains_external": "Others' Trains",
     "unit": {
+      "cnukew": "Cluster warhead",
       "mirvw": "MIRV Warhead",
       "trade": "Trade Ship",
       "trans": "Transport Ship"
@@ -2548,7 +2599,8 @@
     "spectating": "Spectating! Loading the game...",
     "starting_gold": "Starting Gold",
     "title": "Join Lobby",
-    "version_mismatch": "This game was created with a different version. Cannot join."
+    "version_mismatch": "This game was created with a different version. Cannot join.",
+    "you_are_host": "The host left, so you are now hosting this lobby."
   },
   "profile_card": {
     "lifetime_xp": "Lifetime XP"
@@ -2704,8 +2756,16 @@
     "visit_store": "Visit store"
   },
   "radial_menu": {
+    "air_strike_description": "Send a bomber from your nearest airbase or carrier. Damages structures, ships and troops.",
+    "air_strike_title": "Air strike",
+    "call_to_arms_description": "Ask your allies to join the war against this player.",
+    "call_to_arms_title": "Call to arms",
     "delete_unit_description": "Click to delete the nearest unit",
     "delete_unit_title": "Delete Unit",
+    "paradrop_description": "Drop troops here from your nearest airbase or carrier.",
+    "paradrop_title": "Paradrop",
+    "transit_description": "Send troops through allied territory to attack here.",
+    "transit_title": "March via allies",
     "upgrade_x": "Upgrade x{amount}"
   },
   "relation": {
@@ -3188,6 +3248,32 @@
     "success": "Successfully logged in as {email}!",
     "title": "Logging in..."
   },
+  "trade_panel": {
+    "accept": "Accept",
+    "agreements": "Trade agreements",
+    "buy": "Buy {amount}",
+    "cancel": "End",
+    "decline": "Decline",
+    "give_gold": "Give gold",
+    "give_uranium": "Give uranium",
+    "market": "Uranium market",
+    "market_price": "Price: {price} gold per uranium",
+    "new_deal": "New deal",
+    "offer_from": "Offer from {name}",
+    "offer_terms": "They give {giveGold} gold + {giveUranium} uranium for {wantGold} gold + {wantUranium} uranium",
+    "offer_to": "Offer to {name}",
+    "offers": "Offers",
+    "pick_player": "Pick a player",
+    "propose_agreement": "Propose trade agreement",
+    "request_from": "{name} wants a trade agreement",
+    "request_to": "Waiting for {name}",
+    "sell": "Sell {amount}",
+    "send_offer": "Send offer",
+    "tariff": "Your tariff",
+    "title": "Trade",
+    "want_gold": "Want gold",
+    "want_uranium": "Want uranium"
+  },
   "troubleshooting": {
     "battery": "Battery",
     "battery_level": "Battery Level",
@@ -3272,16 +3358,27 @@
     "title": "Tutorial"
   },
   "unit_type": {
+    "airbase": "Airbase",
+    "aircraft_carrier": "Aircraft Carrier",
     "atom_bomb": "Atom Bomb",
     "boat": "Boat",
+    "bomber": "Bomber",
     "city": "City",
+    "cluster_nuke": "Cluster Nuke",
     "defense_post": "Defense Post",
     "factory": "Factory",
+    "fighter": "Fighter",
+    "fishing_boat": "Fishing Boat",
     "hydrogen_bomb": "Hydrogen Bomb",
+    "large_nuke": "Large Nuke",
     "mirv": "MIRV",
     "missile_silo": "Missile Silo",
+    "oil_rig": "Oil Rig",
     "port": "Port",
     "sam_launcher": "SAM Launcher",
+    "transport_plane": "Transport Plane",
+    "troop_column": "Allied Transit",
+    "uranium_mine": "Uranium Mine",
     "warship": "Warship"
   },
   "update_available": {
@@ -3446,6 +3543,8 @@
     "press_a_key": "Press a key",
     "prevent_stacking": "Prevent Building Stacking",
     "prevent_stacking_desc": "Hold to build a new structure instead of upgrading a nearby one. Normal placement restrictions still apply.",
+    "profanity_filter_desc": "Show profanity in other players' names as ***. Turn off to see names as typed (hate terms stay masked).",
+    "profanity_filter_label": "Profanity Filter",
     "quick_chat": "Quick Chat",
     "quick_chat_desc": "Open quick chat for the player whose tile is under your cursor.",
     "random_name_anon": "Anon (e.g. AnonQuartz3)",
@@ -3513,6 +3612,7 @@
     "lapse_notice_after_grant_at_risk": "The month of premium access that came with your Steam purchase has ended, so you are no longer playing as \"{name}\", and the name is no longer reserved. You keep the full game at no charge. Another player can take the name at any moment — subscribe now to keep it.",
     "lapse_notice_at_risk": "You are no longer playing as \"{name}\", and it is no longer reserved. Another player can take it at any moment — resubscribe now to keep it.",
     "not_string": "Username must be a string.",
+    "profanity_notice": "Heads up: other players will see this name as \"{preview}\". Profanity is shown as *** to anyone with the profanity filter on, and hate terms are always masked.",
     "random_name": "Generate a random name",
     "tag": "TAG",
     "tag_invalid_chars": "Clan tag can only contain letters and numbers.",
@@ -3534,6 +3634,7 @@
     "verified_use_hint": "Play under your verified account name"
   },
   "win_modal": {
+    "back_to_lobby": "Back to lobby",
     "died": "You died",
     "discord_description": "Connect with players, discover new features, and win prizes!",
     "exit": "Exit Game",

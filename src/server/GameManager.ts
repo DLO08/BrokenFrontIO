@@ -31,12 +31,58 @@ export class GameManager {
   constructor(
     private log: Logger,
     private readonly gatekeeper: Gatekeeper = noopGatekeeper,
+    // Mints a fresh game id owned by this worker. Without one (tests that
+    // do not need it), successor lobbies cannot be created.
+    private readonly mintGameId: () => GameID | null = () => null,
+    // false stops the tick interval, for tests that drive tick() by hand.
+    autoTick = true,
   ) {
-    setInterval(() => this.tick(), 1000);
+    if (autoTick) setInterval(() => this.tick(), 1000);
+  }
+
+  /**
+   * Open the next lobby for a private game's group, so friends can play game
+   * after game without re-sharing a link. The successor keeps the previous
+   * game's settings and host, and every client still connected to the
+   * previous game is told its id (`new_lobby`). Idempotent: a repeat call
+   * returns the lobby already opened, while it still exists.
+   *
+   * The host is whoever hosted the previous game, unless they have already
+   * left it: then the longest-connected remaining player hosts, so the group
+   * is not left waiting on someone who has gone.
+   */
+  createSuccessorLobby(
+    previous: GameServer,
+  ): { game: GameServer; created: boolean } | "public" | "no_id" | null {
+    if (previous.isPublic()) return "public";
+    const existingId = previous.successorLobby();
+    const existing = existingId !== null ? this.games.get(existingId) : null;
+    if (existingId !== null && existing !== undefined && existing !== null) {
+      previous.setSuccessorLobby(existingId); // re-broadcast for late joiners
+      return { game: existing, created: false };
+    }
+    const id = this.mintGameId();
+    if (id === null) return "no_id";
+    const creator = previous.successorCreator();
+    if (creator === undefined) return null;
+    const config = structuredClone(previous.gameConfig);
+    // Pools are an admin-bot construct for a whole set of sibling lobbies;
+    // the next lobby is just this group's.
+    delete config.pool;
+    config.gameType = GameType.Private;
+    const game = this.createGame(id, config, creator);
+    if (game === null) return null;
+    game.predecessorId = previous.id;
+    previous.setSuccessorLobby(id);
+    return { game, created: true };
   }
 
   public game(id: GameID): GameServer | null {
     return this.games.get(id) ?? null;
+  }
+
+  public allGames(): GameServer[] {
+    return Array.from(this.games.values());
   }
 
   public publicLobbies(): GameServer[] {
@@ -116,10 +162,35 @@ export class GameManager {
       },
       {
         gatekeeper: this.gatekeeper,
+        // A private game with a host carries its group into the next lobby
+        // as soon as the game is decided.
+        onGameDecided: () => {
+          if (creatorPersistentID === undefined) return;
+          const result = this.createSuccessorLobby(game);
+          if (typeof result === "object" && result !== null) {
+            this.log.info("opened next lobby for group", {
+              gameID: id,
+              successorID: result.game.id,
+            });
+          }
+        },
       },
     );
     this.games.set(id, game);
     return game;
+  }
+
+  // Whether a successor lobby's host is still connected to the game it
+  // continues (reading the end screen) rather than gone.
+  private creatorStillOnPredecessor(game: GameServer): boolean {
+    if (game.predecessorId === null) return false;
+    const previous = this.games.get(game.predecessorId);
+    const creator = game.creatorID();
+    return (
+      previous !== undefined &&
+      creator !== undefined &&
+      previous.hasConnectedClient(creator)
+    );
   }
 
   activeGames(): number {
@@ -179,6 +250,10 @@ export class GameManager {
       const phase = game.phase();
       if (phase === GamePhase.Lobby) {
         game.maybeAutoStartListed();
+        game.checkHostPresence(
+          Date.now(),
+          this.creatorStillOnPredecessor(game),
+        );
       }
       if (phase === GamePhase.Active) {
         // A matchmade game missing a player at the start deadline is

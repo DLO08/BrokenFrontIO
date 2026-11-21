@@ -170,7 +170,9 @@ export class FishingBoatExecution implements Execution {
   private landCatch(): void {
     const owner = this.port.owner();
     const dist =
-      this.ground === null ? 0 : this.mg.manhattanDist(this.ground, this.port.tile());
+      this.ground === null
+        ? 0
+        : this.mg.manhattanDist(this.ground, this.port.tile());
     const gold = this.mg.config().fishingGold(dist, owner);
     owner.addGold(gold, this.port.tile());
     this.mg.stats().goldWork(owner, gold);

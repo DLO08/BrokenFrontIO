@@ -287,6 +287,8 @@ export const BrokenfrontFeaturesSchema = z.object({
   alliedTransit: z.boolean().optional(),
   tradeDeals: z.boolean().optional(),
   airWar: z.boolean().optional(),
+  // Fishing boats and offshore oil rigs.
+  seaEconomy: z.boolean().optional(),
 });
 export type BrokenfrontFeatures = z.infer<typeof BrokenfrontFeaturesSchema>;
 export type BrokenfrontFeature = keyof BrokenfrontFeatures;

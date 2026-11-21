@@ -355,6 +355,25 @@ export class SAMRadiusPass {
     const w = this.mapW;
     this.dirtyGroups.clear();
 
+    if (this.depositMode) {
+      this.hasUpgradingSAM = false;
+      // Each deposit gets its own group so overlapping rings stay visible.
+      this.deposits.forEach((d, i) => {
+        circles.push({
+          x: d.x + 0.5,
+          y: d.y + 0.5,
+          radius: d.r + 1.5,
+          r: 0.6,
+          g: 1,
+          b: 0.2,
+          alpha: 0.9,
+          group: 1000 + i,
+          spin: 0,
+        });
+      });
+      return circles;
+    }
+
     for (const u of structures.values()) {
       if (u.unitType !== UT_SAM_LAUNCHER || !u.isActive) continue;
       const isFriendly =
@@ -532,6 +551,22 @@ export class SAMRadiusPass {
         count * FLOATS_PER_INSTANCE,
       );
     }
+  }
+
+  // --- Uranium deposits (BrokenFront) -------------------------------------
+
+  private deposits: { x: number; y: number; r: number }[] = [];
+  private depositMode = false;
+
+  setDeposits(deposits: { x: number; y: number; r: number }[]): void {
+    this.deposits = deposits;
+  }
+
+  /** While on, the pass draws the uranium deposits instead of SAM ranges. */
+  setDepositMode(on: boolean): void {
+    if (on === this.depositMode) return;
+    this.depositMode = on;
+    this.rebuild();
   }
 
   /** Show/hide based on whether build mode is active. */

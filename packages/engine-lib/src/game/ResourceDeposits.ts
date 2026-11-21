@@ -29,7 +29,9 @@ export function depositCount(numLandTiles: number): number {
  * them) and every client computes the same set.
  */
 export function depositSeed(map: GameMap): number {
-  return simpleHash(`uranium:${map.width()}x${map.height()}:${map.numLandTiles()}`);
+  return simpleHash(
+    `uranium:${map.width()}x${map.height()}:${map.numLandTiles()}`,
+  );
 }
 
 function isGoodCentre(map: GameMap, t: TileRef): boolean {
@@ -90,14 +92,20 @@ export function sanitizeDeposits(map: GameMap, deposits: Deposit[]): Deposit[] {
     const x = Math.floor(d.x);
     const y = Math.floor(d.y);
     if (!map.isValidCoord(x, y)) continue;
-    const r = Math.max(1, Math.min(8, Math.floor(d.r ?? DEFAULT_DEPOSIT_RADIUS)));
+    const r = Math.max(
+      1,
+      Math.min(8, Math.floor(d.r ?? DEFAULT_DEPOSIT_RADIUS)),
+    );
     out.push({ x, y, r });
   }
   return out;
 }
 
 /** Per-tile lookup: 1 where a tile lies inside any deposit, else 0. */
-export function rasterizeDeposits(map: GameMap, deposits: Deposit[]): Uint8Array {
+export function rasterizeDeposits(
+  map: GameMap,
+  deposits: Deposit[],
+): Uint8Array {
   const w = map.width();
   const h = map.height();
   const mask = new Uint8Array(w * h);

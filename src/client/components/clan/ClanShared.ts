@@ -472,19 +472,13 @@ export function renderMemberRow(
   return html`
     <div
       class="flex flex-col py-2.5 px-3 rounded-xl border
-        ${
-        isMe
-          ? "bg-brand/10 border-brand/20"
-          : "bg-white/5 border-white/10"
-      }"
+        ${isMe ? "bg-brand/10 border-brand/20" : "bg-white/5 border-white/10"}"
     >
       <div class="flex items-center gap-3">
         <div
           class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0
             ${
-            isMe
-              ? "bg-brand/20 text-brand-light"
-              : "bg-white/10 text-white/50"
+            isMe ? "bg-brand/20 text-brand-light" : "bg-white/10 text-white/50"
           }"
         >
           ${renderRoleIcon(member.role)}

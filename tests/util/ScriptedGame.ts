@@ -106,12 +106,23 @@ export async function createScriptedRunner(
   gameStart: GameStartInfo,
 ): Promise<GameRunner> {
   const { gameMap, gameMapSize } = gameStart.config;
-  return createGameRunner(
+  const runner = await createGameRunner(
     gameStart,
     undefined,
     await loadMapFiles(new TestDataMapLoader(mapName), gameMap, gameMapSize),
     recordErrors,
   );
+  // A dense deposit grid, so the scripted players get to build mines. The
+  // deposits ride in every snapshot, so restored runners see the same ones.
+  const g = runner.game;
+  const deposits = [];
+  for (let y = 10; y < g.height(); y += 30) {
+    for (let x = 10; x < g.width(); x += 30) {
+      deposits.push({ x, y, r: 6 });
+    }
+  }
+  g.setUraniumDeposits(deposits);
+  return runner;
 }
 
 export async function restoreScriptedRunner(
@@ -484,6 +495,11 @@ function playIntent(game: Game, p: Player, rand: PseudoRandom): Intent | null {
     if (bombIntent !== null) return bombIntent;
   }
 
+  if (rand.chance(4)) {
+    const bf = brokenfrontIntent(game, p, rand, other);
+    if (bf !== null) return bf;
+  }
+
   switch (rand.nextInt(0, 22)) {
     case 0:
     case 1:
@@ -585,6 +601,136 @@ function playIntent(game: Game, p: Player, rand: PseudoRandom): Intent | null {
         type: "mark_disconnected",
         isDisconnected: !p.isDisconnected() && rand.chance(3),
       };
+  }
+  return null;
+}
+
+/**
+ * BrokenFront features: uranium mines, oil rigs, airbases, carriers, air
+ * strikes, cluster and large nukes, allied transit, trade and diplomacy.
+ */
+function brokenfrontIntent(
+  game: Game,
+  p: Player,
+  rand: PseudoRandom,
+  other: Player | null,
+): Intent | null {
+  switch (rand.nextInt(0, 9)) {
+    case 0: {
+      // A mine on a deposit we hold, else an airbase.
+      for (let i = 0; i < 10; i++) {
+        const t = randomOwnedTile(rand, p);
+        if (t !== null && p.canBuild(UnitType.UraniumMine, t) !== false) {
+          return { type: "build_unit", unit: UnitType.UraniumMine, tile: t };
+        }
+      }
+      for (let i = 0; i < 10; i++) {
+        const t = randomOwnedTile(rand, p);
+        if (t !== null && p.canBuild(UnitType.Airbase, t) !== false) {
+          return { type: "build_unit", unit: UnitType.Airbase, tile: t };
+        }
+      }
+      return null;
+    }
+    case 1: {
+      const shores = [...p.borderTiles()].filter((t) => game.isShore(t));
+      let water: TileRef | null = null;
+      for (let i = 0; i < 10; i++) {
+        const shore = pick(rand, shores);
+        if (shore === null) return null;
+        water = nearbyWater(game, shore, rand);
+        if (water !== null && p.canBuild(UnitType.OilRig, water) !== false) {
+          return { type: "build_unit", unit: UnitType.OilRig, tile: water };
+        }
+      }
+      if (water === null) return null;
+      if (p.canBuild(UnitType.AircraftCarrier, water) !== false) {
+        return {
+          type: "build_unit",
+          unit: UnitType.AircraftCarrier,
+          tile: water,
+        };
+      }
+      return null;
+    }
+    case 2: {
+      if (other === null) return null;
+      const tile = randomOwnedTile(rand, other);
+      if (tile === null) return null;
+      return {
+        type: "air_strike",
+        kind: rand.chance(2) ? "bomb" : "paratroop",
+        tile,
+        troops: null,
+      };
+    }
+    case 3: {
+      // Level a silo to 2, then fire cluster or large nukes from it.
+      const silo = pick(rand, p.units(UnitType.MissileSilo));
+      if (silo === null || other === null) return null;
+      if (silo.level() < 2 && !silo.isUnderConstruction()) {
+        return {
+          type: "upgrade_structure",
+          unit: UnitType.MissileSilo,
+          unitId: silo.id(),
+        };
+      }
+      const tile = randomOwnedTile(rand, other);
+      const unit = rand.chance(2) ? UnitType.ClusterNuke : UnitType.LargeNuke;
+      if (tile === null || p.canBuild(unit, tile) === false) return null;
+      return { type: "build_unit", unit, tile };
+    }
+    case 4: {
+      // March through an ally to hit one of its neighbours.
+      const ally = pick(rand, p.allies());
+      if (ally === null) return null;
+      const enemies = ally
+        .nearby()
+        .filter(
+          (n): n is Player =>
+            n.isPlayer() && n !== p && !p.isFriendly(n) && !ally.isFriendly(n),
+        );
+      const enemy = pick(rand, enemies);
+      if (enemy === null) return null;
+      const tile = pick(rand, [...enemy.borderTiles()]);
+      if (tile === null) return null;
+      return { type: "transit_attack", dst: tile, troops: p.troops() / 5 };
+    }
+    case 5:
+      if (other === null) return null;
+      return rand.chance(2)
+        ? { type: "trade_agreement", action: "request", other: other.id() }
+        : { type: "trade_agreement", action: "accept", other: other.id() };
+    case 6:
+      return rand.chance(2)
+        ? { type: "set_tariff", pct: rand.chance(2) ? 10 : 0 }
+        : { type: "market_trade", side: "buy", amount: 5 };
+    case 7: {
+      if (other === null) return null;
+      const offer = game
+        .trade()
+        .offersFor(p)
+        .find((o) => o.to === p);
+      if (offer !== undefined) {
+        return { type: "trade_offer_reply", offerId: offer.id, accept: true };
+      }
+      return {
+        type: "trade_offer",
+        recipient: other.id(),
+        giveGold: 1000,
+        giveUranium: 0,
+        wantGold: 0,
+        wantUranium: 1,
+      };
+    }
+    case 8: {
+      if (other === null) return null;
+      const ally = pick(rand, p.allies());
+      if (ally !== null && rand.chance(2)) {
+        return { type: "donate_uranium", recipient: ally.id(), amount: 1 };
+      }
+      return { type: "call_to_arms", target: other.id() };
+    }
   }
   return null;
 }

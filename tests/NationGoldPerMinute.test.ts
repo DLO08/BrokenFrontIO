@@ -149,7 +149,17 @@ async function runNationGame(minutes: number): Promise<{
   const nations = loadWorldNations();
   const game = await setup(
     "world",
-    { difficulty: Difficulty.Impossible },
+    {
+      difficulty: Difficulty.Impossible,
+      // A benchmark of the classic economy.
+      brokenfront: {
+        uranium: false,
+        alliedTransit: false,
+        tradeDeals: false,
+        airWar: false,
+        seaEconomy: false,
+      },
+    },
     [],
     undefined,
     EngineConfig,

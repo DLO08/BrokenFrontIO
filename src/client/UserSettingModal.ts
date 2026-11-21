@@ -2101,6 +2101,15 @@ export class UserSettingModal extends BaseModal {
         @change=${this.toggleAnonymousNames}
       ></setting-toggle>
 
+      <!-- *** Profanity filter -->
+      <setting-toggle
+        label="${translateText("user_setting.profanity_filter_label")}"
+        description="${translateText("user_setting.profanity_filter_desc")}"
+        id="profanity-filter-toggle"
+        .checked=${this.userSettings.profanityFilter()}
+        @change=${() => this.userSettings.toggleProfanityFilter()}
+      ></setting-toggle>
+
       <!-- 👁️ Hidden Lobby IDs -->
       <setting-toggle
         label="${translateText("user_setting.lobby_id_visibility_label")}"

@@ -24,6 +24,11 @@ import { logger } from "./Logger";
 import { MapPlaylist } from "./MapPlaylist";
 import { startPolling } from "./PollingLoop";
 import { ServerEnv } from "./ServerEnv";
+import {
+  EMPTY_SOCIAL,
+  type SocialReport,
+  SocialReportSchema,
+} from "./SocialSchemas";
 
 export interface MasterLobbyServiceOptions {
   playlist: MapPlaylist;
@@ -82,6 +87,8 @@ export class MasterLobbyService {
   // set rather than the roster's own field so a roster that arrives twice
   // between broadcasts does not lose the first one's delists.
   private readonly pendingDelist = new Set<string>();
+  // Each worker's last friend presence / invite report (FriendPresence.ts).
+  private readonly workerSocial = new Map<number, SocialReport>();
 
   constructor(
     private playlist: MapPlaylist,
@@ -110,6 +117,13 @@ export class MasterLobbyService {
         case "lobbyList":
           this.workerLobbies.set(workerId, this.validLobbies(msg.lobbies));
           this.workerLiveGames.set(workerId, msg.liveGames ?? 0);
+          {
+            const social = SocialReportSchema.safeParse(msg.social);
+            this.workerSocial.set(
+              workerId,
+              social.success ? social.data : EMPTY_SOCIAL,
+            );
+          }
           // The client coalesces: at most one report a second, plus a
           // heartbeat. Every change is offered so a numClients-only change
           // still reaches the site roster within a second.
@@ -141,6 +155,7 @@ export class MasterLobbyService {
     this.workers.delete(workerId);
     this.workerLobbies.delete(workerId);
     this.workerLiveGames.delete(workerId);
+    this.workerSocial.delete(workerId);
     this.readyWorkers.delete(workerId);
   }
 
@@ -415,6 +430,10 @@ export class MasterLobbyService {
       },
       delistGameIDs: delist.length > 0 ? delist : undefined,
       active: this.active || !this.stateKnown,
+      social: {
+        presence: [...this.workerSocial.values()].flatMap((r) => r.presence),
+        invites: [...this.workerSocial.values()].flatMap((r) => r.invites),
+      },
     } satisfies MasterLobbiesBroadcast;
     for (const [workerId, worker] of this.workers.entries()) {
       worker.send(msg, (e) => {

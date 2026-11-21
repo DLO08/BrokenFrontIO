@@ -241,9 +241,7 @@ export class AccountSettingsPanel extends LitElement {
           ?disabled=${busy}
           @click=${() => setShown(!shown)}
           class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/50 disabled:opacity-60 ${
-            shown
-              ? "bg-brand shadow-[var(--shadow-brand-pill)]"
-              : "bg-white/15"
+            shown ? "bg-brand shadow-[var(--shadow-brand-pill)]" : "bg-white/15"
           }"
         >
           <span

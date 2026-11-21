@@ -43,6 +43,7 @@ import { JoinLobbyEvent } from "./Main";
 import { openReplayViewer } from "./replay/ReplayEntry";
 import "./components/CopyButton";
 import { ensureServerList, redirectToGameVersion } from "./ServerList";
+import "./components/FriendInvitePanel";
 import "./components/LobbyPlayerView";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { nationsConfigToSlider } from "./utilities/GameConfigHelpers";
@@ -143,7 +144,28 @@ export class JoinLobbyModal extends BaseModal {
       ...lobby,
       startsAt: lobby.startsAt ?? undefined,
     });
+    // The host did not come back to this private lobby, so the server passed
+    // hosting to us (GameServer.checkHostPresence). Reopen it in the host
+    // view: the ?host flag routes there on load, and the server holds the
+    // lobby for us across the reload.
+    if (
+      !this.becomingHost &&
+      event.myClientID !== "" &&
+      lobby.gameID === this.currentLobbyId &&
+      "lobbyCreatorClientID" in lobby &&
+      lobby.lobbyCreatorClientID === event.myClientID &&
+      lobby.gameConfig?.gameType === GameType.Private
+    ) {
+      this.becomingHost = true;
+      showToast(translateText("private_lobby.you_are_host"), "green");
+      const path = ClientEnv.gamePath(lobby.gameID);
+      window.location.href = `${window.location.origin}${path}?host`;
+    }
   };
+
+  // Set once we are on our way to the host view, so the next lobby_info
+  // does not navigate a second time.
+  private becomingHost = false;
 
   protected renderHeaderSlot() {
     if (!this.currentLobbyId) {
@@ -358,6 +380,14 @@ export class JoinLobbyModal extends BaseModal {
                 `
               : html`
                   ${this.gameConfig ? this.renderGameConfig() : html``}
+                  ${
+                    this.isPrivateLobby() && this.currentLobbyId
+                      ? html`<friend-invite-panel
+                          class="block"
+                          .gameID=${this.currentLobbyId}
+                        ></friend-invite-panel>`
+                      : null
+                  }
                   ${
                     this.players.length > 0
                       ? html`

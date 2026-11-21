@@ -559,6 +559,7 @@ export class GPURenderer {
     // --- SAM radius overlay (dashed green circles during build mode) ---
     this.samRadiusPass = new SAMRadiusPass(gl, mapW, this.settings);
     this.samRadiusPass.setPaletteData(paletteData);
+    this.samRadiusPass.setDeposits(header.uraniumDeposits ?? []);
 
     // --- Crosshair (warship placement) ---
     this.crosshairPass = new CrosshairPass(gl);
@@ -1079,7 +1080,13 @@ export class GPURenderer {
         : null,
     );
     this.samGhostVisible =
-      data !== null && SAM_RADIUS_GHOST_TYPES.has(data.ghostType);
+      data !== null &&
+      (SAM_RADIUS_GHOST_TYPES.has(data.ghostType) ||
+        data.ghostType === "Uranium Mine");
+    // Placing a mine shows the uranium deposits instead of SAM ranges.
+    this.samRadiusPass.setDepositMode(
+      data !== null && data.ghostType === "Uranium Mine",
+    );
     this.samRadiusPass.setVisible(
       this.samGhostVisible || this.samHighlightVisible,
     );

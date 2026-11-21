@@ -220,7 +220,9 @@ export class OModal extends LitElement {
               data-key=${tab.key}
               aria-selected=${active}
               class="shrink-0 whitespace-nowrap min-h-10 px-2 py-3 text-[11px] leading-4 tracking-wide sm:px-4 sm:text-sm sm:leading-5 sm:tracking-wider font-bold uppercase transition-all relative cursor-pointer ${
-                active ? "text-brand-light" : "text-white/40 hover:text-white/70"
+                active
+                  ? "text-brand-light"
+                  : "text-white/40 hover:text-white/70"
               }"
               @click=${() => this.handleTabClick(tab.key)}
             >

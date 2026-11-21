@@ -177,3 +177,30 @@ export function deleteLobbyPreset(
   const success = userSettings.setLobbyPresets(newRaw);
   return success ? userSettings.getLobbyPresets() : null;
 }
+
+// The host's lobby settings, carried from one game of a group to the next.
+// Going back to the lobby after a game is a page load (the successor lobby's
+// URL), so the host view would otherwise come back on its defaults — and its
+// first edit would send those defaults and wipe the settings the group was
+// playing with. Per tab (sessionStorage), keyed by nothing else: a tab hosts
+// one lobby at a time.
+const LOBBY_CARRYOVER_KEY = "lobbyCarryover";
+
+export function saveLobbyCarryover(config: LobbyPresetConfig): void {
+  try {
+    sessionStorage.setItem(LOBBY_CARRYOVER_KEY, JSON.stringify(config));
+  } catch {
+    // Storage blocked: the next lobby just opens on defaults.
+  }
+}
+
+export function loadLobbyCarryover(): LobbyPresetConfig | null {
+  try {
+    const raw = sessionStorage.getItem(LOBBY_CARRYOVER_KEY);
+    if (raw === null) return null;
+    const parsed = LobbyPresetConfigSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}

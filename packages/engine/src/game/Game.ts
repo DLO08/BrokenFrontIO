@@ -1,5 +1,3 @@
-import type { TradeBook } from "./TradeBook";
-import type { Deposit } from "@openfront/engine-lib/game/ResourceDeposits";
 import { GameMap, TileRef } from "@openfront/engine-api/game/GameMap";
 import {
   AllianceInfo,
@@ -48,12 +46,14 @@ import {
   GameID,
 } from "@openfront/engine-api/Schemas";
 import { MotionPlanRecord } from "@openfront/engine-lib/game/MotionPlans";
+import type { Deposit } from "@openfront/engine-lib/game/ResourceDeposits";
 import type { EngineConfig } from "../configuration/EngineConfig";
 import { AbstractGraph } from "../pathfinding/algorithms/AbstractGraph";
 import { PathFinder } from "../pathfinding/types";
 import type { ExecRecord, SnapshotWriter } from "../snapshot/SnapshotContext";
 import { RailNetwork } from "./RailNetwork";
 import { Stats } from "./Stats";
+import type { TradeBook } from "./TradeBook";
 
 export interface OwnerComp {
   owner: Player;

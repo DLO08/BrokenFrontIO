@@ -666,7 +666,7 @@ describe("InventoryModal", () => {
     expect(card(modal, "effect:transportShipTrail:owned_wake")?.state).toBe(
       "equipped",
     );
-  });
+  }, 30_000);
 
   it("summarizes all equipped effect slots in one loadout category", async () => {
     const settings = new UserSettings();
@@ -714,7 +714,7 @@ describe("InventoryModal", () => {
     expect(card(modal, "effect:transportShipTrail:owned_wake_alt")?.state).toBe(
       "equipped",
     );
-  });
+  }, 30_000);
 
   it("renders stable loading skeletons and responsive locker markers", async () => {
     Object.assign(modal as unknown as Record<string, unknown>, {

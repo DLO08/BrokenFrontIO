@@ -8,9 +8,18 @@ import {
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
 import {
+  AirStrikeIntent,
   AllPlayersStats,
+  CallToArmsIntent,
   ClientID,
+  DonateUraniumIntent,
   Intent,
+  MarketTradeIntent,
+  SetTariffIntent,
+  TradeAgreementIntent,
+  TradeOfferIntent,
+  TradeOfferReplyIntent,
+  TransitAttackIntent,
   Winner,
 } from "@openfront/engine-api/Schemas";
 import {
@@ -61,6 +70,25 @@ import { LocalServer } from "./LocalServer";
 import { describeSocketClose } from "./SocketClose";
 import { exitGame, translateText } from "./Utils";
 import { PlayerView } from "./view";
+
+/**
+ * Any BrokenFront intent (air strikes, allied transit, diplomacy and
+ * trade): the UI builds the intent itself and Transport sends it as is.
+ */
+export type BrokenfrontIntent =
+  | AirStrikeIntent
+  | TransitAttackIntent
+  | CallToArmsIntent
+  | DonateUraniumIntent
+  | TradeAgreementIntent
+  | SetTariffIntent
+  | TradeOfferIntent
+  | TradeOfferReplyIntent
+  | MarketTradeIntent;
+
+export class SendBrokenfrontIntentEvent implements GameEvent {
+  constructor(public readonly intent: BrokenfrontIntent) {}
+}
 
 export class PauseGameIntentEvent implements GameEvent {
   constructor(public readonly paused: boolean) {}
@@ -343,6 +371,9 @@ export class Transport {
       this.onSendEmbargoAllIntent(e),
     );
     this.subscribe(BuildUnitIntentEvent, (e) => this.onBuildUnitIntent(e));
+    this.subscribe(SendBrokenfrontIntentEvent, (e) =>
+      this.sendIntent(e.intent),
+    );
 
     this.subscribe(PauseGameIntentEvent, (e) => this.onPauseGameIntent(e));
     this.subscribe(SendWinnerEvent, (e) => this.onSendWinnerEvent(e));

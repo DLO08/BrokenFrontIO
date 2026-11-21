@@ -747,9 +747,13 @@ export function getMessageTypeClasses(type: MessageType): string {
     case MessageType.ALLIANCE_EXPIRED:
     case MessageType.NAVAL_INVASION_INBOUND:
     case MessageType.RENEW_ALLIANCE:
+    case MessageType.AIR_RAID_INBOUND:
+    case MessageType.PARATROOPERS_INBOUND:
       return severityColors["warn"];
     case MessageType.CHAT:
     case MessageType.ALLIANCE_REQUEST:
+    case MessageType.TRADE_DEAL:
+    case MessageType.CALL_TO_ARMS:
       return severityColors["info"];
     default:
       console.warn(`Message type ${type} has no explicit color`);

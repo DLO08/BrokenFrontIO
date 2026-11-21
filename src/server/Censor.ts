@@ -74,9 +74,7 @@ export function censorPlayer(
   ) =>
     // A span must start in the clan and extend into the name — otherwise
     // it's already handled by the clan-only or name-only checks.
-    spans.filter(
-      (s) => s.startIndex < tag.length && s.endIndex >= tag.length,
-    );
+    spans.filter((s) => s.startIndex < tag.length && s.endIndex >= tag.length);
   const boundaryProfanity = clanTag
     ? crossesBoundary(profanityMatcher.spans(clanTag + username), clanTag)
         .length > 0

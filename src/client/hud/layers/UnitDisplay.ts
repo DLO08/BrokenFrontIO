@@ -26,16 +26,22 @@ import { UserSettings } from "../../UserSettings";
 import { resolveKeybindLabel, translateText } from "../../Utils";
 import { GameView } from "../../view";
 import {
+  airbaseIcon,
   atomBombIcon,
+  carrierIcon,
   cityIcon,
+  clusterNukeIcon,
   defensePostIcon,
   factoryIcon,
   goldCoinIcon,
   hydrogenBombIcon,
+  largeNukeIcon,
   mirvIcon,
   missileSiloIcon,
+  oilRigIcon,
   portIcon,
   samLauncherIcon,
+  uraniumMineIcon,
   warshipIcon,
 } from "../HotbarIcons";
 import { TutorialHighlight, TutorialHighlightEvent } from "../Tutorial";
@@ -57,6 +63,8 @@ export class UnitDisplay extends LitElement implements Controller {
   public inputHandler: InputHandler;
   private playerBuildables: BuildableUnit[] | null = null;
   private keybinds: Record<string, { value: string; key: string }> = {};
+  /** Built levels of the BrokenFront structures, refreshed each tick. */
+  private _brokenfrontLevels = new Map<UnitType, number>();
   private keyboardLayout = new KeyboardLayoutController(this);
   private _cities = 0;
   private _warships = 0;
@@ -556,11 +564,14 @@ export class UnitDisplay extends LitElement implements Controller {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
       case UnitType.MIRV:
+      case UnitType.LargeNuke:
+      case UnitType.ClusterNuke:
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
           (player?.units(UnitType.MissileSilo).length ?? 0) > 0
         );
       case UnitType.Warship:
+      case UnitType.AircraftCarrier:
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
           (player?.units(UnitType.Port).length ?? 0) > 0
@@ -593,6 +604,14 @@ export class UnitDisplay extends LitElement implements Controller {
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
+    for (const t of [
+      UnitType.UraniumMine,
+      UnitType.OilRig,
+      UnitType.Airbase,
+      UnitType.AircraftCarrier,
+    ]) {
+      this._brokenfrontLevels.set(t, player.totalUnitLevels(t));
+    }
     this.requestUpdate();
   }
 
@@ -706,10 +725,60 @@ export class UnitDisplay extends LitElement implements Controller {
               "mirv",
               this.getHotkey("buildMIRV", "Digit0"),
             )}
+            ${this.renderBrokenfrontItems()}
           </div>
         </div>
         ${this.renderUnitTooltip()}
       </div>
+    `;
+  }
+
+  /** BrokenFront buildables: no default hotkeys (the digits are taken). */
+  private renderBrokenfrontItems() {
+    const levels = (t: UnitType) => this._brokenfrontLevels.get(t) ?? 0;
+    return html`
+      ${this.renderUnitItem(
+        largeNukeIcon,
+        null,
+        UnitType.LargeNuke,
+        "large_nuke",
+        "",
+      )}
+      ${this.renderUnitItem(
+        clusterNukeIcon,
+        null,
+        UnitType.ClusterNuke,
+        "cluster_nuke",
+        "",
+      )}
+      ${this.renderUnitItem(
+        uraniumMineIcon,
+        levels(UnitType.UraniumMine),
+        UnitType.UraniumMine,
+        "uranium_mine",
+        "",
+      )}
+      ${this.renderUnitItem(
+        oilRigIcon,
+        levels(UnitType.OilRig),
+        UnitType.OilRig,
+        "oil_rig",
+        "",
+      )}
+      ${this.renderUnitItem(
+        airbaseIcon,
+        levels(UnitType.Airbase),
+        UnitType.Airbase,
+        "airbase",
+        "",
+      )}
+      ${this.renderUnitItem(
+        carrierIcon,
+        levels(UnitType.AircraftCarrier),
+        UnitType.AircraftCarrier,
+        "aircraft_carrier",
+        "",
+      )}
     `;
   }
 

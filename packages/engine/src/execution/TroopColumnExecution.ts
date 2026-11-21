@@ -62,7 +62,10 @@ export class TroopColumnExecution implements Execution {
       return;
     }
     if (target.isPlayer()) {
-      if (this.player.isFriendly(target) || !this.player.canAttackPlayer(target)) {
+      if (
+        this.player.isFriendly(target) ||
+        !this.player.canAttackPlayer(target)
+      ) {
         this.active = false;
         return;
       }
@@ -74,8 +77,7 @@ export class TroopColumnExecution implements Execution {
       this.active = false;
       return;
     }
-    const want =
-      this.troops ?? mg.config().attackAmount(this.player, target);
+    const want = this.troops ?? mg.config().attackAmount(this.player, target);
     const troops = Math.floor(Math.min(want, this.player.troops()));
     if (troops <= 0) {
       this.active = false;

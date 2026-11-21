@@ -19,9 +19,12 @@ import {
   UT_CITY,
   UT_DEFENSE_POST,
   UT_FACTORY,
+  UT_AIRBASE,
   UT_MISSILE_SILO,
+  UT_OIL_RIG,
   UT_PORT,
   UT_SAM_LAUNCHER,
+  UT_URANIUM_MINE,
 } from "../../types";
 import { DynamicInstanceBuffer } from "../DynamicBuffer";
 import type { RenderSettings } from "../RenderSettings";
@@ -53,6 +56,10 @@ const STRUCTURE_ORDER = [
   UT_DEFENSE_POST,
   UT_SAM_LAUNCHER,
   UT_MISSILE_SILO,
+  // BrokenFront (append only: atlas columns 6-8).
+  UT_URANIUM_MINE,
+  UT_OIL_RIG,
+  UT_AIRBASE,
 ] as const;
 
 const ATLAS_COLS = STRUCTURE_ORDER.length;

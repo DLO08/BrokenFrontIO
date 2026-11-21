@@ -116,6 +116,11 @@ export class DesktopNavBar extends LitElement {
           data-page="page-clan"
           data-i18n="main.clans"
         ></button>
+        <button
+          class="no-game-portal nav-menu-item text-white/70 hover:text-brand font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-brand"
+          data-page="page-friends"
+          data-i18n="main.friends"
+        ></button>
         <!-- Utility cluster: bell, help, settings and the profile control are
              account/notification/utility affordances rather than page links,
              so they sit tight together behind a divider instead of in the nav

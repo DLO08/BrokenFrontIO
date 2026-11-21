@@ -46,6 +46,7 @@ import { PlayerPanel } from "./layers/PlayerPanel";
 import { ReplayPanel } from "./layers/ReplayPanel";
 import { SettingsModal } from "./layers/SettingsModal";
 import { SpawnTimer } from "./layers/SpawnTimer";
+import { TradePanel } from "./layers/TradePanel";
 import { TutorialPanel } from "./layers/TutorialPanel";
 import { UnitDisplay } from "./layers/UnitDisplay";
 import { WinModal } from "./layers/WinModal";
@@ -335,6 +336,16 @@ export function createRenderer(
   onboardingOverlay.transformHandler = transformHandler;
   onboardingOverlay.uiState = uiState;
 
+  // BrokenFront trade panel: mounted here rather than in index.html, and
+  // reused across games.
+  let tradePanel = document.querySelector("trade-panel") as TradePanel | null;
+  if (!(tradePanel instanceof TradePanel)) {
+    tradePanel = document.createElement("trade-panel") as TradePanel;
+    document.body.appendChild(tradePanel);
+  }
+  tradePanel.game = game;
+  tradePanel.eventBus = eventBus;
+
   const layers: Controller[] = [
     new WarshipSelectionController(game, eventBus, transformHandler, view),
     new BuildPreviewController(
@@ -373,6 +384,7 @@ export function createRenderer(
     unitDisplay,
     gameRightSidebar,
     controlPanel,
+    tradePanel,
     playerInfo,
     winModal,
     newLobbyPrompt,

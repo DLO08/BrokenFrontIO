@@ -17,6 +17,7 @@ import { getGamesPlayed, translateText } from "../../Utils";
 import { GameView } from "../../view";
 import { PlayerView } from "../../view/PlayerView";
 import { goldCoinIcon, soldierIcon } from "../HotbarIcons";
+const uraniumIcon = assetUrl("images/UraniumIcon.svg");
 import { OnboardingLowTroopsEvent } from "../Onboarding";
 import { TutorialHighlight, TutorialHighlightEvent } from "../Tutorial";
 const swordIcon = assetUrl("images/SwordIcon.svg");
@@ -49,6 +50,10 @@ export class ControlPanel extends LitElement implements Controller {
 
   @state()
   private _gold: Gold;
+
+  @state()
+  private _uranium: number = 0;
+  private _uraniumOn = false;
 
   @state()
   private _attackingTroops: number = 0;
@@ -144,8 +149,10 @@ export class ControlPanel extends LitElement implements Controller {
     this.updateTroopIncrease();
 
     const config = this.game.config();
+    this._uraniumOn = config.brokenfrontFeature("uranium");
     this._maxTroops = config.maxTroops(player);
     this._gold = player.gold();
+    this._uranium = player.uranium();
     this._troops = player.troops();
     this._attackingTroops = player
       .outgoingAttacks()
@@ -633,6 +640,7 @@ export class ControlPanel extends LitElement implements Controller {
           <img src=${goldCoinIcon} width="13" height="13" class="shrink-0" />
           <span class="tabular-nums">${renderNumber(this._gold)}</span>
         </div>
+        ${this.renderUranium("text-sm")}
       </div>
       <!-- Row 2: attack ratio | slider -->
       <div
@@ -672,6 +680,19 @@ export class ControlPanel extends LitElement implements Controller {
         />
       </div>
     `;
+  }
+
+  /** The uranium stockpile, shown only when the uranium economy is on. */
+  private renderUranium(textSize: string) {
+    if (!this._uraniumOn) return "";
+    return html`<div
+      class="flex items-center gap-1 shrink-0 border rounded-md border-lime-400 font-bold text-lime-400 ${textSize} py-0.5 px-1"
+      translate="no"
+      title=${translateText("control_panel.uranium")}
+    >
+      <img src=${uraniumIcon} width="13" height="13" class="shrink-0" />
+      <span class="tabular-nums">${renderNumber(this._uranium)}</span>
+    </div>`;
   }
 
   private getMobileAttackRatioLabel(): string {
@@ -714,6 +735,7 @@ export class ControlPanel extends LitElement implements Controller {
           <img src=${goldCoinIcon} width="13" height="13" />
           <span class="px-0.5">${renderNumber(this._gold)}</span>
         </div>
+        ${this.renderUranium("text-xs")}
         <!-- Troop bar -->
         <div
           class="w-[40%] shrink-0 side-bar:flex-1 side-bar:min-w-0 flex items-center ${this.tutorialHighlightClass(

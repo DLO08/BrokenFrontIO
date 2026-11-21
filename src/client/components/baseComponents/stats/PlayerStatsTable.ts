@@ -30,6 +30,23 @@ const BUILDING_ORDER = {
   number
 >;
 
+// BrokenFront rows appear only when they have something to show, so a
+// classic game's tables look exactly as before.
+const BROKENFRONT_STAT_KEYS: ReadonlySet<string> = new Set([
+  "umine",
+  "oilr",
+  "abase",
+  "carr",
+  "fish",
+  "lnuke",
+  "cnuke",
+  "cnukew",
+]);
+
+function shownRow(key: string, values: readonly bigint[]): boolean {
+  return !BROKENFRONT_STAT_KEYS.has(key) || values.some((v) => v !== 0n);
+}
+
 const buildingUnits = (
   Object.keys(BUILDING_ORDER) as (keyof typeof BUILDING_ORDER)[]
 ).sort((left, right) => BUILDING_ORDER[left] - BUILDING_ORDER[right]);
@@ -180,10 +197,13 @@ export class PlayerStatsTable extends LitElement {
         ${statsSection(
           "player_stats_table.building_stats",
           UNIT_COLUMNS,
-          buildingUnits.map((key) => ({
-            label: UNIT_LABEL_KEYS[key],
-            values: slots(stats?.units?.[key], 4),
-          })),
+          buildingUnits
+            .map((key) => ({
+              key,
+              label: UNIT_LABEL_KEYS[key],
+              values: slots(stats?.units?.[key], 4),
+            }))
+            .filter((row) => shownRow(row.key, row.values)),
           "player_stats_table.building",
         )}
         ${statsSection("player_stats_table.warship_stats", UNIT_COLUMNS, [
@@ -197,10 +217,13 @@ export class PlayerStatsTable extends LitElement {
             "player_stats_table.captured",
             "player_stats_table.destroyed",
           ],
-          boatUnits.map((key) => ({
-            label: UNIT_LABEL_KEYS[key],
-            values: slots(stats?.boats?.[key], 4),
-          })),
+          boatUnits
+            .map((key) => ({
+              key,
+              label: UNIT_LABEL_KEYS[key],
+              values: slots(stats?.boats?.[key], 4),
+            }))
+            .filter((row) => shownRow(row.key, row.values)),
           "player_stats_table.ship_type",
         )}
         <!-- Launched and Landed count missiles this player fired; Intercepted
@@ -213,10 +236,13 @@ export class PlayerStatsTable extends LitElement {
             "player_stats_table.landed",
             "player_stats_table.intercepted",
           ],
-          bombUnits.map((key) => ({
-            label: UNIT_LABEL_KEYS[key],
-            values: slots(stats?.bombs?.[key], 3),
-          })),
+          bombUnits
+            .map((key) => ({
+              key,
+              label: UNIT_LABEL_KEYS[key],
+              values: slots(stats?.bombs?.[key], 3),
+            }))
+            .filter((row) => shownRow(row.key, row.values)),
           "player_stats_table.weapon",
         )}
         ${statsSection(

@@ -400,15 +400,11 @@ body.halloween-theme:not(.in-game) .border-t-blue-500 {
 body.halloween-theme:not(.in-game)
   game-config-settings
   .bg-brand\/20.border-brand\/50,
-body.halloween-theme:not(.in-game)
-  map-picker
-  .bg-brand\/20.border-brand\/50,
+body.halloween-theme:not(.in-game) map-picker .bg-brand\/20.border-brand\/50,
 body.halloween-theme:not(.in-game)
   toggle-input-card
   .bg-brand\/20.border-brand\/50,
-body.halloween-theme:not(.in-game)
-  input-card
-  .bg-brand\/20.border-brand\/50 {
+body.halloween-theme:not(.in-game) input-card .bg-brand\/20.border-brand\/50 {
   background-color: rgba(224, 108, 18, 0.15) !important;
   border-color: rgba(224, 108, 18, 0.45) !important;
 }
@@ -582,7 +578,9 @@ body.halloween-theme:not(.in-game)
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.halloween-theme:not(.in-game) desktop-nav-bar img[src*="BrokenFrontLogo"],
+  body.halloween-theme:not(.in-game)
+    desktop-nav-bar
+    img[src*="BrokenFrontLogo"],
   body.halloween-theme:not(.in-game) mobile-nav-bar img[src*="BrokenFrontLogo"],
   body.halloween-theme:not(.in-game)
     play-page

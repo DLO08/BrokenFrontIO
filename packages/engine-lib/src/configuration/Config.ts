@@ -7,10 +7,7 @@ import {
   UnitType,
 } from "@openfront/engine-api/game/GameTypes";
 import { PlayerLike } from "@openfront/engine-api/game/ReadViews";
-import {
-  BrokenfrontFeature,
-  GameConfig,
-} from "@openfront/engine-api/Schemas";
+import { BrokenfrontFeature, GameConfig } from "@openfront/engine-api/Schemas";
 import { pow } from "../DetMath";
 import { DoomsdayClockSpeed } from "../game/DoomsdayClock";
 import { assertNever } from "../Util";
@@ -194,6 +191,9 @@ export class Config {
         return !this.brokenfrontFeature("airWar");
       case UnitType.TroopColumn:
         return !this.brokenfrontFeature("alliedTransit");
+      case UnitType.FishingBoat:
+      case UnitType.OilRig:
+        return !this.brokenfrontFeature("seaEconomy");
       default:
         return false;
     }
@@ -204,6 +204,8 @@ export class Config {
   brokenfrontFeature(feature: BrokenfrontFeature): boolean {
     const explicit = this._gameConfig.brokenfront?.[feature];
     if (explicit !== undefined) return explicit;
+    // The onboarding tutorial teaches the classic game.
+    if (this._gameConfig.tutorial) return false;
     return this._gameConfig.gameType !== GameType.Public;
   }
 
@@ -211,6 +213,10 @@ export class Config {
   // off, for warheads split off a carrier, and for non-nukes.
   uraniumCost(unitType: UnitType): number {
     if (!this.brokenfrontFeature("uranium")) return 0;
+    // With mines disabled there is no way to get uranium: costs are off.
+    if (this._gameConfig.disabledUnits?.includes(UnitType.UraniumMine)) {
+      return 0;
+    }
     switch (unitType) {
       case UnitType.AtomBomb:
         return 10;
@@ -599,7 +605,8 @@ export class Config {
         // and targeting previews.
         return {
           inner: 12 + this.clusterNukeSpread(),
-          outer: this.nukeMagnitudes(UnitType.AtomBomb).outer +
+          outer:
+            this.nukeMagnitudes(UnitType.AtomBomb).outer +
             this.clusterNukeSpread(),
         };
     }

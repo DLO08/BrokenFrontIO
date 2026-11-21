@@ -165,8 +165,7 @@ export class FighterExecution implements Execution {
   snapshot(w: SnapshotWriter): ExecRecord {
     return FighterExecutionSnapshot.write({
       active: this.active,
-      init:
-        this.mg === undefined ? null : { random: w.random(this.random) },
+      init: this.mg === undefined ? null : { random: w.random(this.random) },
       player: w.player(this.player),
       home: w.unit(this.home),
       fighter: w.unitOrNull(this.fighter),

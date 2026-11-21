@@ -101,7 +101,10 @@ export class CarrierExecution implements Execution {
     if (patrolTile === undefined || !this.mg.isValidRef(patrolTile)) {
       return undefined;
     }
-    const range = Math.max(4, Math.floor(this.mg.config().warshipPatrolRange() / 2));
+    const range = Math.max(
+      4,
+      Math.floor(this.mg.config().warshipPatrolRange() / 2),
+    );
     const component = this.mg.getWaterComponent(carrier.tile());
     for (let attempt = 0; attempt < 50; attempt++) {
       const x = this.mg.x(patrolTile) + this.random.nextInt(-range, range + 1);
