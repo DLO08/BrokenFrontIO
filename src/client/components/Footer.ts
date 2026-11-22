@@ -99,7 +99,6 @@ export class Footer extends LitElement {
           </div>
         </div>
 
-
         <!-- Single instance: translateText() resolves the active language via
              document.querySelector("lang-selector"), so a second one would
              shadow it. -->

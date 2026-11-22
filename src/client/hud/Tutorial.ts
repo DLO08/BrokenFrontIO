@@ -107,7 +107,10 @@ export interface TutorialStep {
     | "buildFactory"
     | "buildWarship"
     | "buildMissileSilo"
-    | "buildAtomBomb";
+    | "buildAtomBomb"
+    | "buildOilRig"
+    | "buildUraniumMine"
+    | "buildAirbase";
   /**
    * Render these `tutorial.step.*` keys as a bullet list instead of the
    * step's own single text.
@@ -228,6 +231,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     id: "buy_oil_rig",
     highlight: "oil_rig",
     unit: UnitType.OilRig,
+    hotkey: "buildOilRig",
     applies: (c) => !c.oilRigDisabled,
     isDone: (c) => c.oilRigs > 0,
   },
@@ -274,6 +278,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     id: "buy_uranium_mine",
     highlight: "uranium_mine",
     unit: UnitType.UraniumMine,
+    hotkey: "buildUraniumMine",
     applies: (c) => !c.uraniumDisabled,
     isDone: (c) => c.uraniumMines > 0,
   },
@@ -328,6 +333,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     id: "buy_airbase",
     highlight: "airbase",
     unit: UnitType.Airbase,
+    hotkey: "buildAirbase",
     applies: (c) => !c.airbaseDisabled,
     isDone: (c) => c.airbases > 0,
   },

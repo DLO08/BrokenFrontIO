@@ -1,0 +1,5 @@
+# Never commit bot credentials or webhook URLs.
+*token*
+*.secret
+*.local.json
+webhooks.txt

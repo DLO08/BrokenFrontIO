@@ -7,11 +7,11 @@ the target, and the nearest ready silo fires. Both cost uranium
 
 ## Large Nuke
 
-| | |
-| --- | --- |
-| Cost | 2.5M gold + 25 uranium |
+|       |                                                          |
+| ----- | -------------------------------------------------------- |
+| Cost  | 2.5M gold + 25 uranium                                   |
 | Blast | 40 tiles of total destruction, out to 60 tiles of damage |
-| Silo | Any finished silo that isn't reloading |
+| Silo  | Any finished silo that isn't reloading                   |
 
 A bigger Atom Bomb. Where the atom bomb opens a hole in a border, the Large
 Nuke takes out a city cluster, and it reaches far enough to hit the buildings
@@ -20,12 +20,12 @@ small enough to use next to your own land.
 
 ## Cluster Nuke
 
-| | |
-| --- | --- |
-| Cost | 2.25M gold + 30 uranium |
-| Warheads | 5 atom-sized warheads |
-| Pattern | One on the aim point, four on a ring 40 tiles out |
-| Silo | Level 2 or higher |
+|          |                                                   |
+| -------- | ------------------------------------------------- |
+| Cost     | 2.25M gold + 30 uranium                           |
+| Warheads | 5 atom-sized warheads                             |
+| Pattern  | One on the aim point, four on a ring 40 tiles out |
+| Silo     | Level 2 or higher                                 |
 
 Five atom bombs for the price of three — but spread, not stacked. It flies as a
 single carrier missile and splits near the target, so **shooting the carrier

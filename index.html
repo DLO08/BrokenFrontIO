@@ -223,6 +223,10 @@
         "--mobile-logo-image-url",
         `url("<%- mobileLogoImageUrl %>")`,
       );
+      document.documentElement.style.setProperty(
+        "--backdrop-fronts-image-url",
+        `url("<%- backdropFrontsImageUrl %>")`,
+      );
     </script>
 
     <script>
@@ -329,6 +333,20 @@
           background-position: center top;
         "
       ></div>
+      <!-- The front lines, screen-blended over the field above (black is a
+           no-op under `screen`, and the layer is black everywhere but the
+           fronts). It drifts and breathes on its own while the terrain holds
+           still; styles.css drives it, and stops it in-game and under
+           prefers-reduced-motion. -->
+      <div
+        id="backdrop-fronts"
+        class="absolute inset-x-0 top-0 -bottom-[4cm] bg-cover opacity-30 mix-blend-screen [filter:brightness(1.0)] dark:[filter:sepia(0.6)_saturate(1.3)_hue-rotate(-12deg)_brightness(0.75)]"
+        style="
+          background-image: var(--backdrop-fronts-image-url);
+          background-position: center top;
+        "
+      ></div>
+      <div id="backdrop-scan" class="absolute inset-0 overflow-hidden"></div>
       <div
         class="absolute inset-0 bg-center bg-no-repeat bg-contain hidden lg:block"
         style="background-image: var(--desktop-logo-image-url); opacity: 0.5"

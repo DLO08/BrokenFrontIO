@@ -122,6 +122,11 @@ export async function renderHtmlContent(
       assetManifest,
       cdnBase,
     ),
+    backdropFrontsImageUrl: buildAssetUrl(
+      "images/BackdropFronts.webp",
+      assetManifest,
+      cdnBase,
+    ),
     desktopLogoImageUrl: buildAssetUrl(
       "images/BrokenFrontLogo.svg",
       assetManifest,

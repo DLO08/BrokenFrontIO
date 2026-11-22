@@ -1,0 +1,311 @@
+{
+  "_comment": "Declarative BrokenFront Discord server layout. Applied by apply.mjs. Idempotent: everything is matched by name, so edit this file and re-run.",
+
+  "guild": {
+    "description": "BrokenFront - real-time multiplayer territorial strategy.",
+    "icon": "resources/images/BrokenFrontMark.svg",
+    "systemChannel": "welcome",
+    "rulesChannel": "welcome",
+    "publicUpdatesChannel": "mod-log"
+  },
+
+  "palette": {
+    "ink": "#161310",
+    "orange": "#e5602a",
+    "bone": "#ede6dd",
+    "ember": "#b8441c",
+    "slate": "#6b6560"
+  },
+
+  "roles": [
+    {
+      "name": "Founder",
+      "color": "#e5602a",
+      "hoist": true,
+      "mentionable": false,
+      "permissions": ["ADMINISTRATOR"]
+    },
+    {
+      "name": "Admin",
+      "color": "#e5602a",
+      "hoist": true,
+      "mentionable": false,
+      "permissions": [
+        "MANAGE_GUILD", "MANAGE_CHANNELS", "MANAGE_ROLES", "MANAGE_WEBHOOKS",
+        "MANAGE_GUILD_EXPRESSIONS", "MANAGE_EVENTS", "VIEW_AUDIT_LOG",
+        "KICK_MEMBERS", "BAN_MEMBERS", "MODERATE_MEMBERS",
+        "MANAGE_MESSAGES", "MANAGE_THREADS", "MANAGE_NICKNAMES",
+        "MENTION_EVERYONE", "MOVE_MEMBERS", "MUTE_MEMBERS", "DEAFEN_MEMBERS",
+        "VIEW_CHANNEL", "SEND_MESSAGES", "READ_MESSAGE_HISTORY"
+      ]
+    },
+    {
+      "name": "Moderator",
+      "color": "#b8441c",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": [
+        "KICK_MEMBERS", "MODERATE_MEMBERS", "MANAGE_MESSAGES", "MANAGE_THREADS",
+        "MANAGE_NICKNAMES", "VIEW_AUDIT_LOG", "MOVE_MEMBERS", "MUTE_MEMBERS",
+        "DEAFEN_MEMBERS", "MENTION_EVERYONE",
+        "VIEW_CHANNEL", "SEND_MESSAGES", "READ_MESSAGE_HISTORY", "EMBED_LINKS",
+        "ATTACH_FILES", "ADD_REACTIONS", "USE_EXTERNAL_EMOJIS",
+        "CREATE_PUBLIC_THREADS", "SEND_MESSAGES_IN_THREADS", "CONNECT", "SPEAK"
+      ]
+    },
+
+    { "name": "---- TEAM ----", "divider": true },
+
+    {
+      "name": "Developer",
+      "color": "#ede6dd",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": [
+        "VIEW_CHANNEL", "SEND_MESSAGES", "READ_MESSAGE_HISTORY", "EMBED_LINKS",
+        "ATTACH_FILES", "ADD_REACTIONS", "USE_EXTERNAL_EMOJIS",
+        "CREATE_PUBLIC_THREADS", "SEND_MESSAGES_IN_THREADS", "CONNECT", "SPEAK", "STREAM"
+      ]
+    },
+    { "name": "Map Maker", "color": "#c9bfae", "hoist": true, "mentionable": true, "permissions": [] },
+    { "name": "Translator", "color": "#c9bfae", "hoist": true, "mentionable": true, "permissions": [] },
+    { "name": "Playtester", "color": "#a89c8a", "hoist": false, "mentionable": true, "permissions": [] },
+
+    { "name": "--- COMMUNITY ---", "divider": true },
+
+    {
+      "name": "Tournament Organizer",
+      "color": "#8a7f70",
+      "hoist": true,
+      "mentionable": true,
+      "permissions": ["MANAGE_EVENTS", "MENTION_EVERYONE", "MOVE_MEMBERS"]
+    },
+    { "name": "Veteran", "color": "#6b6560", "hoist": false, "mentionable": false, "permissions": [] },
+
+    { "name": "---- BOTS ----", "divider": true },
+    { "name": "Bot", "color": "#4a4440", "hoist": true, "mentionable": false, "permissions": [] },
+
+    { "name": "Announcement Ping", "color": null, "hoist": false, "mentionable": true, "permissions": [] },
+    { "name": "Playtest Ping", "color": null, "hoist": false, "mentionable": true, "permissions": [] },
+    { "name": "Tournament Ping", "color": null, "hoist": false, "mentionable": true, "permissions": [] },
+
+    { "name": "NA", "color": null, "hoist": false, "mentionable": true, "permissions": [] },
+    { "name": "EU", "color": null, "hoist": false, "mentionable": true, "permissions": [] },
+    { "name": "APAC", "color": null, "hoist": false, "mentionable": true, "permissions": [] },
+    { "name": "LATAM", "color": null, "hoist": false, "mentionable": true, "permissions": [] }
+  ],
+
+  "everyone": {
+    "allow": [
+      "VIEW_CHANNEL", "SEND_MESSAGES", "READ_MESSAGE_HISTORY", "ADD_REACTIONS",
+      "EMBED_LINKS", "ATTACH_FILES", "USE_EXTERNAL_EMOJIS", "USE_EXTERNAL_STICKERS",
+      "USE_APPLICATION_COMMANDS", "CREATE_PUBLIC_THREADS", "SEND_MESSAGES_IN_THREADS",
+      "CONNECT", "SPEAK", "STREAM", "USE_VAD", "REQUEST_TO_SPEAK", "CHANGE_NICKNAME"
+    ],
+    "deny": [
+      "MENTION_EVERYONE", "SEND_TTS_MESSAGES", "CREATE_PRIVATE_THREADS",
+      "MANAGE_MESSAGES", "MANAGE_THREADS", "CREATE_INSTANT_INVITE"
+    ]
+  },
+
+  "categories": [
+    {
+      "name": "WELCOME",
+      "channels": [
+        {
+          "key": "welcome",
+          "name": "welcome",
+          "type": "text",
+          "topic": "Start here. Rules, what BrokenFront is, and where to go next.",
+          "preset": "readonly"
+        },
+        {
+          "key": "announcements",
+          "name": "announcements",
+          "type": "announcement",
+          "topic": "Releases and server news. Follow this channel to get it in your own server.",
+          "preset": "readonly"
+        },
+        {
+          "key": "changelog",
+          "name": "changelog",
+          "type": "text",
+          "topic": "Automated patch notes from the release pipeline.",
+          "preset": "readonly",
+          "webhook": "Release Bot"
+        },
+        {
+          "key": "server-status",
+          "name": "server-status",
+          "type": "text",
+          "topic": "Uptime, maintenance windows, and incident notices.",
+          "preset": "readonly"
+        }
+      ]
+    },
+    {
+      "name": "COMMUNITY",
+      "channels": [
+        { "key": "general", "name": "general", "type": "text", "topic": "Main chat. Be decent to each other." },
+        { "key": "off-topic", "name": "off-topic", "type": "text", "topic": "Everything that isn't BrokenFront." },
+        {
+          "key": "clips",
+          "name": "clips-and-screenshots",
+          "type": "text",
+          "topic": "Your best comebacks, worst defeats, and prettiest maps.",
+          "slowmode": 10
+        },
+        { "key": "introductions", "name": "introductions", "type": "text", "topic": "Say hello.", "slowmode": 30 }
+      ]
+    },
+    {
+      "name": "THE GAME",
+      "channels": [
+        { "key": "strategy", "name": "strategy", "type": "text", "topic": "Openings, build orders, alliance play, troop math." },
+        {
+          "key": "map-showcase",
+          "name": "map-showcase",
+          "type": "text",
+          "topic": "Share maps built with the scenario editor or the map generator."
+        },
+        {
+          "key": "bug-reports",
+          "name": "bug-reports",
+          "type": "forum",
+          "topic": "One thread per bug. Include your build version, the map, and what you expected to happen.",
+          "tags": ["Client", "Engine", "Renderer", "Maps", "Multiplayer", "Needs Info", "Confirmed", "Fixed"]
+        },
+        {
+          "key": "suggestions",
+          "name": "suggestions",
+          "type": "forum",
+          "topic": "One thread per idea. Search before posting.",
+          "tags": ["Gameplay", "Balance", "UI", "Maps", "Accessibility", "Under Review", "Planned", "Declined"]
+        }
+      ]
+    },
+    {
+      "name": "PLAY",
+      "channels": [
+        { "key": "lfg", "name": "looking-for-game", "type": "text", "topic": "Find people to play with right now." },
+        {
+          "key": "clans",
+          "name": "clan-recruitment",
+          "type": "text",
+          "topic": "Recruit for your clan, or find one. One post per clan per day.",
+          "slowmode": 3600
+        },
+        { "key": "tournaments", "name": "tournaments", "type": "text", "topic": "Brackets, signups, and results." },
+        { "key": "vc1", "name": "Lobby 1", "type": "voice" },
+        { "key": "vc2", "name": "Lobby 2", "type": "voice" },
+        { "key": "vc3", "name": "Lobby 3", "type": "voice" },
+        { "key": "stage", "name": "Tournament Stage", "type": "stage" }
+      ]
+    },
+    {
+      "name": "DEV",
+      "channels": [
+        { "key": "dev-chat", "name": "dev-chat", "type": "text", "topic": "Engine, client, server. Determinism questions welcome." },
+        {
+          "key": "commits",
+          "name": "commits",
+          "type": "text",
+          "topic": "GitHub activity.",
+          "preset": "readonly",
+          "webhook": "GitHub"
+        },
+        { "key": "translations", "name": "translations", "type": "text", "topic": "Crowdin coordination and locale questions." }
+      ]
+    },
+    {
+      "name": "STAFF",
+      "preset": "staff-only",
+      "channels": [
+        { "key": "staff-chat", "name": "staff-chat", "type": "text", "topic": "Private staff coordination." },
+        {
+          "key": "mod-log",
+          "name": "mod-log",
+          "type": "text",
+          "topic": "Automated moderation and AutoMod log.",
+          "preset": "staff-readonly"
+        },
+        { "key": "reports", "name": "reports", "type": "text", "topic": "User reports land here." },
+        { "key": "appeals", "name": "appeals", "type": "text", "topic": "Ban and mute appeals." }
+      ]
+    }
+  ],
+
+  "automod": [
+    {
+      "name": "Block invite links",
+      "trigger": "keyword",
+      "patterns": ["discord.gg/*", "discord.com/invite/*", "discordapp.com/invite/*"],
+      "exemptRoles": ["Founder", "Admin", "Moderator", "Tournament Organizer"],
+      "logTo": "mod-log"
+    },
+    {
+      "name": "Block slurs and explicit content",
+      "trigger": "preset",
+      "presets": ["PROFANITY", "SEXUAL_CONTENT", "SLURS"],
+      "exemptRoles": ["Founder", "Admin", "Moderator"],
+      "logTo": "mod-log"
+    },
+    {
+      "name": "Block spam",
+      "trigger": "spam",
+      "exemptRoles": ["Founder", "Admin", "Moderator"],
+      "logTo": "mod-log"
+    },
+    {
+      "name": "Mention raid protection",
+      "trigger": "mention_spam",
+      "mentionLimit": 8,
+      "exemptRoles": ["Founder", "Admin", "Moderator", "Tournament Organizer"],
+      "logTo": "mod-log"
+    }
+  ],
+
+  "onboarding": {
+    "_defaultChannels": "Discord requires at least 7 default channels, 5+ of them writable by @everyone.",
+    "defaultChannels": [
+      "welcome",
+      "announcements",
+      "general",
+      "off-topic",
+      "clips",
+      "strategy",
+      "lfg"
+    ],
+    "prompts": [
+      {
+        "title": "What do you want pinged for?",
+        "multiple": true,
+        "options": [
+          { "label": "Announcements", "description": "New releases and major news", "roles": ["Announcement Ping"] },
+          { "label": "Playtests", "description": "Early builds that need testing", "roles": ["Playtest Ping", "Playtester"] },
+          { "label": "Tournaments", "description": "Signups and brackets", "roles": ["Tournament Ping"] }
+        ]
+      },
+      {
+        "title": "What brings you here?",
+        "multiple": true,
+        "options": [
+          { "label": "I'm here to play", "description": "Matchmaking and community", "channels": ["lfg", "general"] },
+          { "label": "I build maps", "description": "Scenario editor and map generator", "roles": ["Map Maker"], "channels": ["map-showcase"] },
+          { "label": "I want to contribute code", "description": "Engine, client, server", "roles": ["Developer"], "channels": ["dev-chat"] },
+          { "label": "I can translate", "description": "Help localise the game", "roles": ["Translator"], "channels": ["translations"] }
+        ]
+      },
+      {
+        "title": "Where do you play from?",
+        "multiple": false,
+        "options": [
+          { "label": "North America", "description": "Pingable as @NA when someone wants a game", "roles": ["NA"] },
+          { "label": "Europe", "description": "Pingable as @EU when someone wants a game", "roles": ["EU"] },
+          { "label": "Asia-Pacific", "description": "Pingable as @APAC when someone wants a game", "roles": ["APAC"] },
+          { "label": "Latin America", "description": "Pingable as @LATAM when someone wants a game", "roles": ["LATAM"] }
+        ]
+      }
+    ]
+  }
+}

@@ -647,6 +647,9 @@ export class GameModeSelector extends LitElement {
 
   render() {
     const ffa = this.lobbies?.games?.["ffa"]?.[0];
+    // Drops out of the row for good once the player has a few games on the
+    // clock, which is also what turns the row back into three even columns.
+    const showTutorial = getGamesPlayed() < TUTORIAL_CARD_MAX_GAMES;
     const teams = this.lobbies?.games?.["team"]?.[0];
     const special = this.lobbies?.games?.["special"]?.[0];
     // A lone secondary card takes both of the column's card rows.
@@ -660,37 +663,37 @@ export class GameModeSelector extends LitElement {
 
     // DOM is in phone order; sm+ places the same elements onto a grid and
     // reading-flow keeps focus order following the rows (Chromium only).
-    // On compact screens (styles.css) Solo/Tutorial sit under the hero card only,
-    // and the lobby column runs down beside them, so its two cards get that height.
+    // On compact screens (styles.css) Solo sits under the hero card only, and
+    // the lobby column runs down beside it, so its two cards get that height.
     return html`
       <div
         class="flex flex-col gap-4 sm:compact:gap-3 w-full px-4 pb-4 mx-auto sm:px-0 sm:pb-0 sm:grid sm:grid-cols-[2fr_1fr] sm:grid-rows-[min(24rem,40vh)_auto_auto] sm:compact:grid-rows-[minmax(min(24rem,40vh),auto)_3.5rem_auto] desktop:sm:grid-rows-[40vh_auto_auto] sm:[reading-flow:grid-rows]"
       >
-        <div
-          class="flex gap-4 sm:compact:gap-3 h-14 sm:col-span-2 sm:row-start-2 sm:compact:col-span-1!"
-        >
-          <div class="flex-[2]">
-            ${this.renderSmallActionCard(
-              translateText("main.solo"),
-              this.openSinglePlayerModal,
-              PRIMARY_ACTION,
-            )}
-          </div>
-          ${
-            getGamesPlayed() < TUTORIAL_CARD_MAX_GAMES
-              ? html`<div class="flex-1">
-                  ${this.renderSmallActionCard(
-                    translateText("main.tutorial"),
-                    this.startTutorial,
-                    TUTORIAL_ACTION,
-                  )}
-                </div>`
-              : nothing
-          }
+        <div class="h-14 sm:col-span-2 sm:row-start-2 sm:compact:col-span-1!">
+          ${this.renderSmallActionCard(
+            translateText("main.solo"),
+            this.openSinglePlayerModal,
+            PRIMARY_ACTION,
+          )}
         </div>
         <div
-          class="grid grid-cols-3 gap-4 sm:compact:gap-3 h-14 sm:col-span-2 sm:row-start-3"
+          class="grid ${
+            showTutorial
+              ? // Four across only has room from sm up; narrower than that
+                // they go two-by-two, and the row grows to fit the second line.
+                "grid-cols-2 h-32 sm:grid-cols-4 sm:h-14"
+              : "grid-cols-3 h-14"
+          } gap-4 sm:compact:gap-3 sm:col-span-2 sm:row-start-3"
         >
+          ${
+            showTutorial
+              ? this.renderSmallActionCard(
+                  translateText("main.tutorial"),
+                  this.startTutorial,
+                  TUTORIAL_ACTION,
+                )
+              : nothing
+          }
           ${this.renderSmallActionCard(
             translateText("main.create"),
             this.openHostLobby,

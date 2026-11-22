@@ -88,25 +88,25 @@ The game server only serves `index.html` and the WebSocket. All other assets (JS
 
 ## Key Files
 
-| File                                   | Purpose                                    |
-| -------------------------------------- | ------------------------------------------ |
-| `packages/engine-api/src/Schemas.ts`   | Intent and game config types (Zod schemas) |
-| `packages/shared/src/WireSchemas.ts`   | Client/server message types (Zod schemas)  |
-| `packages/engine/src/GameRunner.ts`    | Simulation orchestrator                    |
-| `packages/engine/src/game/GameImpl.ts` | Game state implementation                  |
-| `src/server/GameServer.ts`             | Main WebSocket server, game loop           |
-| `src/server/Master.ts`                 | Lobby and game registry                    |
-| `tests/util/Setup.ts`                  | Test helper — creates test games           |
-| `tests/LayerBoundaries.test.ts`        | Enforces the package import rules          |
-| `docs/Architecture.md`                 | Architecture overview                      |
-| `packages/zbin/README.md`              | Binary wire format for zod schemas         |
-| `docs/Auth.md`                         | JWT/auth flow                              |
-| `docs/API.md`                          | Public API endpoints                       |
-| `docs/Replays.md`                      | Replay viewer design and code map          |
-| `docs/ScenarioEditor.md`               | Scenario editor design and status          |
-| `docs/GameServerRefactor.md`           | Plan for splitting `GameServer.ts`         |
+| File                                   | Purpose                                                      |
+| -------------------------------------- | ------------------------------------------------------------ |
+| `packages/engine-api/src/Schemas.ts`   | Intent and game config types (Zod schemas)                   |
+| `packages/shared/src/WireSchemas.ts`   | Client/server message types (Zod schemas)                    |
+| `packages/engine/src/GameRunner.ts`    | Simulation orchestrator                                      |
+| `packages/engine/src/game/GameImpl.ts` | Game state implementation                                    |
+| `src/server/GameServer.ts`             | Main WebSocket server, game loop                             |
+| `src/server/Master.ts`                 | Lobby and game registry                                      |
+| `tests/util/Setup.ts`                  | Test helper — creates test games                             |
+| `tests/LayerBoundaries.test.ts`        | Enforces the package import rules                            |
+| `docs/Architecture.md`                 | Architecture overview                                        |
+| `packages/zbin/README.md`              | Binary wire format for zod schemas                           |
+| `docs/Auth.md`                         | JWT/auth flow                                                |
+| `docs/API.md`                          | Public API endpoints                                         |
+| `docs/Replays.md`                      | Replay viewer design and code map                            |
+| `docs/ScenarioEditor.md`               | Scenario editor design and status                            |
+| `docs/GameServerRefactor.md`           | Plan for splitting `GameServer.ts`                           |
 | `docs/Wiki.md`                         | The in-game wiki, and keeping the player-facing docs in step |
-| `vite.config.ts`                       | Build config, CDN handling, Vitest config  |
+| `vite.config.ts`                       | Build config, CDN handling, Vitest config                    |
 
 ## Player-facing docs
 

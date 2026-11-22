@@ -23,9 +23,9 @@ neither side is marked a traitor for ending it.
 Your tariff is a levy on trade ships arriving at **your** ports from players
 you have no agreement with. You can set it to 0%, 10% or 25%.
 
-| Situation | Who gets what |
-| --- | --- |
-| Partners | Both sides get the payout +25% |
+| Situation    | Who gets what                                                                           |
+| ------------ | --------------------------------------------------------------------------------------- |
+| Partners     | Both sides get the payout +25%                                                          |
 | No agreement | The destination's tariff moves that share of the payout from the sender to the receiver |
 
 A tariff takes gold from your trading partners' pockets rather than creating
@@ -47,13 +47,13 @@ sell it at the price you choose rather than the market's.
 
 Buy and sell uranium for gold at any time, with no counterparty.
 
-| | |
-| --- | --- |
-| Base price | 60,000 gold per uranium |
-| Spread | Buy at +10%, sell at −10% |
-| Price moves | +1.5% per unit of net demand |
-| Range | 20,000 – 300,000 gold |
-| Decay | Net demand drifts back toward zero over time |
+|             |                                              |
+| ----------- | -------------------------------------------- |
+| Base price  | 60,000 gold per uranium                      |
+| Spread      | Buy at +10%, sell at −10%                    |
+| Price moves | +1.5% per unit of net demand                 |
+| Range       | 20,000 – 300,000 gold                        |
+| Decay       | Net demand drifts back toward zero over time |
 
 The price is global and shared: every purchase pushes it up for everyone, every
 sale pushes it down, and it settles back if the world stops trading. A player

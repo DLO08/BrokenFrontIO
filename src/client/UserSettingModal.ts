@@ -1511,6 +1511,66 @@ export class UserSettingModal extends BaseModal {
       ></setting-keybind>
 
       <setting-keybind
+        action="buildLargeNuke"
+        label=${translateText("user_setting.build_large_nuke")}
+        description=${translateText("user_setting.build_hotkey_desc")}
+        defaultKey=${this.defaultKeybinds.buildLargeNuke}
+        .value=${this.getKeyValue("buildLargeNuke")}
+        .display=${this.getKeyChar("buildLargeNuke")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildClusterNuke"
+        label=${translateText("user_setting.build_cluster_nuke")}
+        description=${translateText("user_setting.build_hotkey_desc")}
+        defaultKey=${this.defaultKeybinds.buildClusterNuke}
+        .value=${this.getKeyValue("buildClusterNuke")}
+        .display=${this.getKeyChar("buildClusterNuke")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildUraniumMine"
+        label=${translateText("user_setting.build_uranium_mine")}
+        description=${translateText("user_setting.build_hotkey_desc")}
+        defaultKey=${this.defaultKeybinds.buildUraniumMine}
+        .value=${this.getKeyValue("buildUraniumMine")}
+        .display=${this.getKeyChar("buildUraniumMine")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildOilRig"
+        label=${translateText("user_setting.build_oil_rig")}
+        description=${translateText("user_setting.build_hotkey_desc")}
+        defaultKey=${this.defaultKeybinds.buildOilRig}
+        .value=${this.getKeyValue("buildOilRig")}
+        .display=${this.getKeyChar("buildOilRig")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildAirbase"
+        label=${translateText("user_setting.build_airbase")}
+        description=${translateText("user_setting.build_hotkey_desc")}
+        defaultKey=${this.defaultKeybinds.buildAirbase}
+        .value=${this.getKeyValue("buildAirbase")}
+        .display=${this.getKeyChar("buildAirbase")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
+        action="buildAircraftCarrier"
+        label=${translateText("user_setting.build_aircraft_carrier")}
+        description=${translateText("user_setting.build_hotkey_desc")}
+        defaultKey=${this.defaultKeybinds.buildAircraftCarrier}
+        .value=${this.getKeyValue("buildAircraftCarrier")}
+        .display=${this.getKeyChar("buildAircraftCarrier")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
         action="buildScrollModifier"
         .allowModifiers=${true}
         label=${translateText("user_setting.build_scroll_modifier")}

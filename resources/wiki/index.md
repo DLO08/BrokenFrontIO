@@ -23,13 +23,13 @@ attacking, cities, ports, factories, warships, silos and the original nukes.
 Every expansion feature is a toggle on the lobby config, so a game can run
 anywhere between the classic ruleset and the full expansion:
 
-| Toggle | Covers |
-| --- | --- |
-| `uranium` | Uranium deposits, Uranium Mines, uranium costs on nukes, the uranium market |
-| `airWar` | Airbases, Aircraft Carriers, Fighters, Bombers, paradrops |
-| `seaEconomy` | Oil Rigs and Fishing Boats |
-| `tradeDeals` | Trade agreements, tariffs and player-to-player offers |
-| `alliedTransit` | Marching troops through allied land |
+| Toggle          | Covers                                                                      |
+| --------------- | --------------------------------------------------------------------------- |
+| `uranium`       | Uranium deposits, Uranium Mines, uranium costs on nukes, the uranium market |
+| `airWar`        | Airbases, Aircraft Carriers, Fighters, Bombers, paradrops                   |
+| `seaEconomy`    | Oil Rigs and Fishing Boats                                                  |
+| `tradeDeals`    | Trade agreements, tariffs and player-to-player offers                       |
+| `alliedTransit` | Marching troops through allied land                                         |
 
 Unless a lobby says otherwise, all five are **on** in singleplayer and private
 games and **off** in public games, which stay on the classic ruleset until the

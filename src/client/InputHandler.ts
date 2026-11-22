@@ -655,6 +655,12 @@ export class InputHandler {
       "buildHydrogenBomb",
       "buildWarship",
       "buildMIRV",
+      "buildLargeNuke",
+      "buildClusterNuke",
+      "buildUraniumMine",
+      "buildOilRig",
+      "buildAirbase",
+      "buildAircraftCarrier",
     ];
     buildKeybinds = buildKeybinds.map((i: string): string => {
       return this.keybinds[i];
@@ -1911,6 +1917,13 @@ export class InputHandler {
       { key: "buildHydrogenBomb", type: UnitType.HydrogenBomb },
       { key: "buildWarship", type: UnitType.Warship },
       { key: "buildMIRV", type: UnitType.MIRV },
+      // Action-bar row 2 (BrokenFront): Shift+1..6 by default.
+      { key: "buildLargeNuke", type: UnitType.LargeNuke },
+      { key: "buildClusterNuke", type: UnitType.ClusterNuke },
+      { key: "buildUraniumMine", type: UnitType.UraniumMine },
+      { key: "buildOilRig", type: UnitType.OilRig },
+      { key: "buildAirbase", type: UnitType.Airbase },
+      { key: "buildAircraftCarrier", type: UnitType.AircraftCarrier },
     ];
     for (const { key, type } of buildKeybinds) {
       if (this.keybindMatchesEvent({ code, shiftKey }, this.keybinds[key]))

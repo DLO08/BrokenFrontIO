@@ -8,8 +8,13 @@
  *
  * Data flow:
  *   UnitState.health / .missileTimerQueue / .constructionStartTick → CPU progress
- *   → instance VBO (x, y, progress) → GPU colored rectangle
+ *   → instance VBO (x, y, progress, kind) → GPU colored rectangle
  *   UnitState.veterancy → one instance per level (x, y, slot) → solid gold rect
+ *
+ * `kind` is what the bar MEANS, and the shader picks the hue from it. Only
+ * health runs the red→green ramp; construction, reload and deletion each keep
+ * one flat color all the way across, so a freshly placed city doesn't look
+ * like a unit about to die.
  */
 
 import { UnitType } from "@openfront/engine-api/game/GameTypes";
@@ -27,8 +32,17 @@ import barVertSrc from "../shaders/bar/bar.vert.glsl?raw";
 // Constants
 // ---------------------------------------------------------------------------
 
-const FLOATS_PER_INSTANCE = 3; // x, y, progress
+const FLOATS_PER_INSTANCE = 4; // x, y, progress, kind
 const BYTES_PER_INSTANCE = FLOATS_PER_INSTANCE * 4;
+
+/** What a bar is for. Read by the shader to pick its color. */
+const BAR_HEALTH = 0;
+const BAR_CONSTRUCTION = 1;
+const BAR_RELOAD = 2;
+const BAR_DELETION = 3;
+
+/** Fallback max health for a unit type the config has no entry for. */
+const DEFAULT_MAX_HEALTH = 1;
 
 // ---------------------------------------------------------------------------
 // BarPass
@@ -49,6 +63,10 @@ export class BarPass {
   private uColorOrange: WebGLUniformLocation;
   private uColorYellow: WebGLUniformLocation;
   private uColorGreen: WebGLUniformLocation;
+  private uColorConstruction: WebGLUniformLocation;
+  private uColorReload: WebGLUniformLocation;
+  private uColorDeletion: WebGLUniformLocation;
+  private uTrackTint: WebGLUniformLocation;
   private uSolid: WebGLUniformLocation;
   private uSolidColor: WebGLUniformLocation;
   private uPipStride: WebGLUniformLocation;
@@ -64,8 +82,9 @@ export class BarPass {
   private veterancyCount = 0;
 
   private mapW: number;
-  private warshipMaxHealth: number;
   private veterancyHealthBonus: number;
+  /** Per-unit-type base max health, resolved lazily from the rules config. */
+  private maxHealthByType = new Map<string, number>();
 
   constructor(
     gl: WebGL2RenderingContext,
@@ -76,7 +95,6 @@ export class BarPass {
     this.gl = gl;
     this.settings = settings;
     this.mapW = header.mapWidth;
-    this.warshipMaxHealth = config.unitInfo(UnitType.Warship).maxHealth ?? 0;
     this.veterancyHealthBonus = config.warshipVeterancyHealthBonus();
 
     // --- Shader program ---
@@ -90,6 +108,16 @@ export class BarPass {
     this.uColorOrange = gl.getUniformLocation(this.program, "uColorOrange")!;
     this.uColorYellow = gl.getUniformLocation(this.program, "uColorYellow")!;
     this.uColorGreen = gl.getUniformLocation(this.program, "uColorGreen")!;
+    this.uColorConstruction = gl.getUniformLocation(
+      this.program,
+      "uColorConstruction",
+    )!;
+    this.uColorReload = gl.getUniformLocation(this.program, "uColorReload")!;
+    this.uColorDeletion = gl.getUniformLocation(
+      this.program,
+      "uColorDeletion",
+    )!;
+    this.uTrackTint = gl.getUniformLocation(this.program, "uTrackTint")!;
     this.uSolid = gl.getUniformLocation(this.program, "uSolid")!;
     this.uSolidColor = gl.getUniformLocation(this.program, "uSolidColor")!;
     this.uPipStride = gl.getUniformLocation(this.program, "uPipStride")!;
@@ -123,7 +151,7 @@ export class BarPass {
       gl.DYNAMIC_DRAW,
     );
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, BYTES_PER_INSTANCE, 0);
+    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, BYTES_PER_INSTANCE, 0);
     gl.vertexAttribDivisor(1, 1);
 
     gl.bindVertexArray(null);
@@ -139,15 +167,16 @@ export class BarPass {
     this.progressCount = 0;
     this.veterancyCount = 0;
 
-    // --- Health bars + veterancy pips (warships) ---
-    // Only warships carry health among mobile units, so this loop is effectively
-    // warship-only.
+    // --- Health bars + veterancy pips (any mobile unit that carries health) ---
+    // Warships, carriers, fishing boats and aircraft all have health, and each
+    // has its OWN max: measuring them all against the warship's 1000 made a
+    // healthy 200 HP fishing boat draw a permanent 20% red bar.
     for (const unit of mobileUnits.values()) {
       if (unit.health === null || unit.health <= 0) continue;
       // Veteran warships have a higher effective max health, so a full veteran
       // ship reads as full. Shared with the engine's UnitImpl.maxHealth().
       const maxHealth = maxHealthWithVeterancy(
-        this.warshipMaxHealth,
+        this.baseMaxHealth(unit.unitType),
         unit.veterancy,
         this.veterancyHealthBonus,
       );
@@ -163,8 +192,24 @@ export class BarPass {
     for (const unit of structures.values()) {
       if (!unit.isActive) continue;
       const progress = this.computeStructureProgress(unit, gameTick);
-      if (progress !== null) this.pushProgress(unit, progress);
+      if (progress !== null)
+        this.pushProgress(unit, progress.value, progress.kind);
     }
+  }
+
+  /**
+   * Base (veterancy-free) max health for a unit type, mirroring the engine's
+   * `UnitImpl.maxHealth()`. Cached: `unitInfo` is itself cached, but this is
+   * called for every unit on screen every tick.
+   */
+  private baseMaxHealth(unitType: string): number {
+    const cached = this.maxHealthByType.get(unitType);
+    if (cached !== undefined) return cached;
+    const max =
+      this.config.unitInfo(unitType as UnitType).maxHealth ??
+      DEFAULT_MAX_HEALTH;
+    this.maxHealthByType.set(unitType, max);
+    return max;
   }
 
   /** Render bars. Call once per frame after FX, before names. */
@@ -198,6 +243,25 @@ export class BarPass {
       b.colorYellowB,
     );
     gl.uniform3f(this.uColorGreen, b.colorGreenR, b.colorGreenG, b.colorGreenB);
+    gl.uniform3f(
+      this.uColorConstruction,
+      b.colorConstructionR,
+      b.colorConstructionG,
+      b.colorConstructionB,
+    );
+    gl.uniform3f(
+      this.uColorReload,
+      b.colorReloadR,
+      b.colorReloadG,
+      b.colorReloadB,
+    );
+    gl.uniform3f(
+      this.uColorDeletion,
+      b.colorDeletionR,
+      b.colorDeletionG,
+      b.colorDeletionB,
+    );
+    gl.uniform1f(this.uTrackTint, b.trackTint);
     gl.bindVertexArray(this.vao);
 
     // Health bars
@@ -266,6 +330,7 @@ export class BarPass {
     this.healthData[off] = unit.pos % this.mapW;
     this.healthData[off + 1] = (unit.pos - this.healthData[off]) / this.mapW;
     this.healthData[off + 2] = progress;
+    this.healthData[off + 3] = BAR_HEALTH;
     this.healthCount++;
   }
 
@@ -279,31 +344,36 @@ export class BarPass {
       this.veterancyData[off] = x;
       this.veterancyData[off + 1] = y;
       this.veterancyData[off + 2] = slot; // vertical stack slot, read by the shader
+      this.veterancyData[off + 3] = 0; // unused in pip mode
       this.veterancyCount++;
     }
   }
 
-  private pushProgress(unit: UnitState, progress: number): void {
+  private pushProgress(unit: UnitState, progress: number, kind: number): void {
     if (this.progressCount >= this.maxBars) return;
     const off = this.progressCount * FLOATS_PER_INSTANCE;
     const x = unit.pos % this.mapW;
     this.progressData[off] = x;
     this.progressData[off + 1] = (unit.pos - x) / this.mapW;
     this.progressData[off + 2] = progress;
+    this.progressData[off + 3] = kind;
     this.progressCount++;
   }
 
   private computeStructureProgress(
     unit: UnitState,
     gameTick: number,
-  ): number | null {
+  ): { value: number; kind: number } | null {
     // Deletion progress (reverse countdown — takes priority over other bars)
     if (unit.markedForDeletion !== false) {
       const remaining = unit.markedForDeletion - gameTick;
-      return Math.max(
-        0,
-        Math.min(1, remaining / this.config.deletionMarkDuration()),
-      );
+      return {
+        value: Math.max(
+          0,
+          Math.min(1, remaining / this.config.deletionMarkDuration()),
+        ),
+        kind: BAR_DELETION,
+      };
     }
 
     // Construction progress
@@ -312,7 +382,10 @@ export class BarPass {
         this.config.unitInfo(unit.unitType as UnitType).constructionDuration ??
         50;
       const elapsed = gameTick - unit.constructionStartTick;
-      return Math.min(1, Math.max(0, elapsed / duration));
+      return {
+        value: Math.min(1, Math.max(0, elapsed / duration)),
+        kind: BAR_CONSTRUCTION,
+      };
     }
 
     // Missile readiness (Silo / SAM)
@@ -321,7 +394,7 @@ export class BarPass {
       unit.unitType === UT_SAM_LAUNCHER
     ) {
       const readiness = this.missileReadiness(unit, gameTick);
-      if (readiness < 1) return readiness;
+      if (readiness < 1) return { value: readiness, kind: BAR_RELOAD };
     }
 
     return null;

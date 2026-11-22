@@ -2,7 +2,7 @@
 precision highp float;
 
 layout(location = 0) in vec2 aPos;        // unit quad [0,1]x[0,1]
-layout(location = 1) in vec3 aInstData;   // x, y, progress
+layout(location = 1) in vec4 aInstData;   // x, y, progress, kind
 
 uniform mat3 uCamera;
 uniform vec2 uBarSize;     // (width, height) in world tiles
@@ -12,11 +12,13 @@ uniform float uPipStride;  // vertical spacing between stacked pips, in tiles
 
 out vec2 vLocalPos;        // [0, barWidth] x [0, barHeight]
 flat out float vProgress;
+flat out float vKind;      // BarKind: 0 health, 1 construction, 2 reload, 3 deletion
 
 void main() {
   float worldX = aInstData.x;
   float worldY = aInstData.y;
   vProgress = aInstData.z;
+  vKind = aInstData.w;
 
   vec2 center = vec2(worldX + 0.5, worldY + 0.5);
   vec2 offset = uBarOffset;

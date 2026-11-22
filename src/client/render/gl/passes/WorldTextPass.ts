@@ -35,6 +35,11 @@ const BYTES_PER_INSTANCE = FLOATS_PER_INSTANCE * 4;
 const CONQUEST_LIFETIME_MS = 2500;
 /** Tiles below conquered name location (matches upstream DynamicUILayer). */
 const CONQUEST_Y_OFFSET = 8;
+/** Gold-colored map text: both gold popups and the conquest payout use it. */
+const GOLD_TEXT = [1.0, 0.84, 0.25] as const;
+/** A gold loss, so it doesn't read as income at a glance. */
+const LOSS_TEXT = [1.0, 0.36, 0.33] as const;
+
 /** World-space font size for conquest popups. */
 const CONQUEST_SCALE = 6;
 const CONQUEST_OUTLINE_WIDTH = 2.0;
@@ -287,9 +292,11 @@ export class WorldTextPass {
         startMs,
         lifetimeMs: CONQUEST_LIFETIME_MS,
         riseSpeed: 0,
-        colorR: 1,
-        colorG: 1,
-        colorB: 1,
+        // Gold, like every other number on the map that means gold. White
+        // read as "some notification"; the color is what says what it is.
+        colorR: GOLD_TEXT[0],
+        colorG: GOLD_TEXT[1],
+        colorB: GOLD_TEXT[2],
         scale: CONQUEST_SCALE,
         outlineWidth: CONQUEST_OUTLINE_WIDTH,
       });
@@ -304,7 +311,13 @@ export class WorldTextPass {
       if (evt.gold === 0) continue;
       const x = evt.tile % this.mapW;
       const y = Math.floor(evt.tile / this.mapW);
-      const sign = evt.gold >= 0 ? "+" : "-";
+      const gain = evt.gold >= 0;
+      const sign = gain ? "+" : "-";
+      // Income is gold-colored, a loss is red: the sign alone is easy to miss
+      // at map zoom, the color is not.
+      const [cr, cg, cb] = gain
+        ? ([s.colorR, s.colorG, s.colorB] as const)
+        : LOSS_TEXT;
       this.active.push({
         x,
         y: y + s.yOffset,
@@ -312,9 +325,9 @@ export class WorldTextPass {
         startMs: now,
         lifetimeMs: s.lifetimeMs,
         riseSpeed: s.riseSpeed,
-        colorR: s.colorR,
-        colorG: s.colorG,
-        colorB: s.colorB,
+        colorR: cr,
+        colorG: cg,
+        colorB: cb,
         scale: s.scale,
         outlineWidth: s.outlineWidth,
       });

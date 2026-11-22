@@ -656,7 +656,6 @@ export class WinModal extends LitElement implements Controller {
     `;
   }
 
-
   async show() {
     void gamePortal.gameplayStop();
     // The onboarding tutorial ends on its own card (OnboardingOverlay).

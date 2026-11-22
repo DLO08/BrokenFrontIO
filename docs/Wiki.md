@@ -6,15 +6,15 @@ modal. One page per feature, describing what it does and the numbers behind it.
 
 ## Where it lives
 
-| Part | File |
-| --- | --- |
-| Page content | `resources/wiki/<slug>.md` |
-| The modal, and the list of pages | `src/client/WikiModal.ts` (`WIKI_PAGES`) |
-| Nav labels and modal chrome | `resources/lang/en.json` under `wiki.*` |
-| Page element | `index.html` (`<wiki-modal id="page-wiki">`) |
-| Lazy chunk / router entry | `src/client/LazyModals.ts`, `src/client/Main.ts` |
-| Production serving | `src/server/PublicAssetManifest.ts` (`wiki/**/*`) |
-| Nav items | `src/client/components/{Desktop,Mobile}NavBar.ts` |
+| Part                             | File                                              |
+| -------------------------------- | ------------------------------------------------- |
+| Page content                     | `resources/wiki/<slug>.md`                        |
+| The modal, and the list of pages | `src/client/WikiModal.ts` (`WIKI_PAGES`)          |
+| Nav labels and modal chrome      | `resources/lang/en.json` under `wiki.*`           |
+| Page element                     | `index.html` (`<wiki-modal id="page-wiki">`)      |
+| Lazy chunk / router entry        | `src/client/LazyModals.ts`, `src/client/Main.ts`  |
+| Production serving               | `src/server/PublicAssetManifest.ts` (`wiki/**/*`) |
+| Nav items                        | `src/client/components/{Desktop,Mobile}NavBar.ts` |
 
 The markdown is fetched with `assetUrl("wiki/<slug>.md")` and rendered through
 `renderMarkdown` (marked + DOMPurify), the same way the changelog is. Each page

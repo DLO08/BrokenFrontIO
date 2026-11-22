@@ -314,6 +314,11 @@ export default defineConfig(({ mode }) => {
       assetManifest,
       cdnBase,
     ),
+    backdropFrontsImageUrl: buildAssetUrl(
+      "images/BackdropFronts.webp",
+      assetManifest,
+      cdnBase,
+    ),
     desktopLogoImageUrl: buildAssetUrl(
       "images/BrokenFrontLogo.svg",
       assetManifest,

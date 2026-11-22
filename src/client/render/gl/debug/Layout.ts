@@ -328,6 +328,31 @@ export function buildTree(s: RenderSettings, d: RenderSettings): DebugNode[] {
         "Yellow",
       ),
       color(s.bar, "colorGreenR", "colorGreenG", "colorGreenB", d.bar, "Green"),
+      color(
+        s.bar,
+        "colorConstructionR",
+        "colorConstructionG",
+        "colorConstructionB",
+        d.bar,
+        "Construction",
+      ),
+      color(
+        s.bar,
+        "colorReloadR",
+        "colorReloadG",
+        "colorReloadB",
+        d.bar,
+        "Reload",
+      ),
+      color(
+        s.bar,
+        "colorDeletionR",
+        "colorDeletionG",
+        "colorDeletionB",
+        d.bar,
+        "Deletion",
+      ),
+      slider(s.bar, "trackTint", d.bar, 0, 1, 0.02, "Empty Track Tint"),
     ]),
 
     folder("Unit", [

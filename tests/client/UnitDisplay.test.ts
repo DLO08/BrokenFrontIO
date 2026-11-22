@@ -122,13 +122,24 @@ describe("mobile UnitDisplay layout", () => {
       expect(scroller?.classList.contains("side-bar:overflow-y-auto")).toBe(
         true,
       );
-      expect(grid?.classList.contains("grid-flow-col")).toBe(true);
-      expect(grid?.classList.contains("auto-cols-fr")).toBe(true);
-      expect(grid?.classList.contains("lg:auto-cols-max")).toBe(true);
-      expect(grid?.classList.contains("side-bar:grid-flow-row")).toBe(true);
-      expect(grid?.classList.contains("side-bar:grid-cols-1")).toBe(true);
+      expect(grid?.classList.contains("bf-grid")).toBe(true);
       // Ten classic buildables plus six BrokenFront ones.
       expect(grid?.children).toHaveLength(16);
+      // Two action-bar rows: the number row, then the same keys with Shift.
+      // Row 2 starts back at column 1, so Shift+3 sits under 3.
+      const rows = Array.from(grid?.children ?? []).map((child) => [
+        (child as HTMLElement).style.getPropertyValue("--r"),
+        (child as HTMLElement).style.getPropertyValue("--c"),
+      ]);
+      expect(rows.slice(0, 10)).toEqual(
+        Array.from({ length: 10 }, (_, i) => ["1", String(i + 1)]),
+      );
+      expect(rows.slice(10)).toEqual(
+        Array.from({ length: 6 }, (_, i) => ["2", String(i + 1)]),
+      );
+      // The grid is as wide as its wider row.
+      const root = display.querySelector<HTMLElement>(".unit-display-root");
+      expect(root?.style.getPropertyValue("--bf-cols")).toBe("10");
     } finally {
       display.remove();
     }
@@ -171,16 +182,17 @@ describe("mobile UnitDisplay layout", () => {
     }
   });
 
-  test("button hover backgrounds are limited to fine pointers", async () => {
+  test("slots are tagged with the action-bar row they belong to", async () => {
     const { display } = makeDisplay();
     try {
       await display.updateComplete;
-      const cityButton = display.querySelector(".unit-display-grid > * > div");
+      const slots = display.querySelectorAll(".unit-display-grid > * > div");
 
-      expect(cityButton?.classList.contains("hover:bg-gray-800")).toBe(false);
-      expect(
-        cityButton?.classList.contains("pointer-fine:hover:bg-gray-800"),
-      ).toBe(true);
+      // The hover background now lives in styles.css behind
+      // `@media (pointer: fine)`, so there is no hover class to assert here.
+      expect(slots[0]?.classList.contains("bf-slot")).toBe(true);
+      expect(slots[0]?.classList.contains("bf-slot-core")).toBe(true);
+      expect(slots[10]?.classList.contains("bf-slot-adv")).toBe(true);
     } finally {
       display.remove();
     }
@@ -1122,9 +1134,8 @@ describe("mobile UnitDisplay layout", () => {
     const { display, inputHandler } = makeDisplay(UnitType.City);
     try {
       await display.updateComplete;
-      const cityItem = display.querySelector(".grid")?.children[0] as
-        | HTMLElement
-        | undefined;
+      const cityItem = display.querySelector(".unit-display-grid")
+        ?.children[0] as HTMLElement | undefined;
       const cityButton = cityItem?.children[0] as HTMLElement | undefined;
 
       expect(cityButton).toBeDefined();

@@ -248,6 +248,20 @@ export interface RenderSettings {
     colorGreenR: number;
     colorGreenG: number;
     colorGreenB: number;
+    // Per-purpose bar colors. A bar's color says WHAT it is, not just how far
+    // along it is: only health uses the red->green ramp above, so a half-built
+    // city no longer reads as a half-dead one.
+    colorConstructionR: number;
+    colorConstructionG: number;
+    colorConstructionB: number;
+    colorReloadR: number;
+    colorReloadG: number;
+    colorReloadB: number;
+    colorDeletionR: number;
+    colorDeletionG: number;
+    colorDeletionB: number;
+    /** The unfilled part of a bar is its own color at this brightness. */
+    trackTint: number;
     // Warship veterancy rank pips (gold lines at the sprite's bottom-right)
     veterancyPipW: number;
     veterancyPipH: number;

@@ -6,14 +6,14 @@ so they keep paying while you are at war and under embargo.
 
 ## Oil Rig
 
-| | |
-| --- | --- |
-| Cost | 600k gold, rising 600k per rig, capped at 2M |
-| Build time | 10s |
-| Health | 600 |
-| Placement | Open water within 10 tiles of your own land |
-| Income | 8,000 gold per level every 5s |
-| Upgradable | Yes |
+|            |                                              |
+| ---------- | -------------------------------------------- |
+| Cost       | 600k gold, rising 600k per rig, capped at 2M |
+| Build time | 10s                                          |
+| Health     | 600                                          |
+| Placement  | Open water within 10 tiles of your own land  |
+| Income     | 8,000 gold per level every 5s                |
+| Upgradable | Yes                                          |
 
 Offshore and undefended: a rig has no guns, and sits in water where enemy
 warships and bombers can reach it. It also needs a supply line — a rig whose

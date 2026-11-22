@@ -56,6 +56,48 @@ const PEEK_GRACE_MS = 1200;
 // phone), so the finger doesn't hide where it will be built.
 const DRAG_GHOST_LIFT_PX = 44;
 
+/** One slot on the action bar. */
+interface ActionSlot {
+  icon: string;
+  /** Built levels shown in the slot corner, or null for a unit with no count. */
+  count: number | null;
+  unitType: PlayerBuildableUnitType;
+  /** Suffix under `unit_type.` / `build_menu.desc.` in the language files. */
+  structureKey: string;
+  /** Keybind action name, as stored in the player's keybind settings. */
+  keybind: string;
+  /** The key that action is bound to out of the box. */
+  defaultCode: string;
+}
+
+/** Tuple -> ActionSlot, so the two row tables stay readable. */
+function toSlot(entry: unknown[]): ActionSlot {
+  const [icon, count, unitType, structureKey, keybind, defaultCode] = entry as [
+    string,
+    number | null,
+    PlayerBuildableUnitType,
+    string,
+    string,
+    string,
+  ];
+  return { icon, count, unitType, structureKey, keybind, defaultCode };
+}
+
+/**
+ * The label that fits in a slot corner: "Digit4" -> "4", "KeyB" -> "B",
+ * "Shift+Digit4" -> "⇧4". Row 2 is all Shift bindings, so spelling out
+ * "SHIFT+4" sixteen times would be most of the bar.
+ */
+export function shortHotkey(hotkey: string): string {
+  const shift = /^(shift\s*\+\s*|⇧)/i.test(hotkey);
+  const rest = hotkey
+    .replace(/^(shift\s*\+\s*|⇧)/i, "")
+    .replace("Digit", "")
+    .replace("Key", "")
+    .toUpperCase();
+  return shift ? `⇧${rest}` : rest;
+}
+
 @customElement("unit-display")
 export class UnitDisplay extends LitElement implements Controller {
   public game: GameView;
@@ -643,6 +685,129 @@ export class UnitDisplay extends LitElement implements Controller {
     this.requestUpdate();
   }
 
+  /**
+   * Row 1 of the action bar: the buildables OpenFront shipped with, on the
+   * number row.
+   */
+  private coreSlots(): ActionSlot[] {
+    return [
+      [cityIcon, this._cities, UnitType.City, "city", "buildCity", "Digit1"],
+      [
+        factoryIcon,
+        this._factories,
+        UnitType.Factory,
+        "factory",
+        "buildFactory",
+        "Digit2",
+      ],
+      [portIcon, this._port, UnitType.Port, "port", "buildPort", "Digit3"],
+      [
+        defensePostIcon,
+        this._defensePost,
+        UnitType.DefensePost,
+        "defense_post",
+        "buildDefensePost",
+        "Digit4",
+      ],
+      [
+        missileSiloIcon,
+        this._missileSilo,
+        UnitType.MissileSilo,
+        "missile_silo",
+        "buildMissileSilo",
+        "Digit5",
+      ],
+      [
+        samLauncherIcon,
+        this._samLauncher,
+        UnitType.SAMLauncher,
+        "sam_launcher",
+        "buildSamLauncher",
+        "Digit6",
+      ],
+      [
+        warshipIcon,
+        this._warships,
+        UnitType.Warship,
+        "warship",
+        "buildWarship",
+        "Digit7",
+      ],
+      [
+        atomBombIcon,
+        null,
+        UnitType.AtomBomb,
+        "atom_bomb",
+        "buildAtomBomb",
+        "Digit8",
+      ],
+      [
+        hydrogenBombIcon,
+        null,
+        UnitType.HydrogenBomb,
+        "hydrogen_bomb",
+        "buildHydrogenBomb",
+        "Digit9",
+      ],
+      [mirvIcon, null, UnitType.MIRV, "mirv", "buildMIRV", "Digit0"],
+    ].map(toSlot);
+  }
+
+  /** Row 2: everything BrokenFront added, on Shift + the same number row. */
+  private advancedSlots(): ActionSlot[] {
+    const levels = (t: UnitType) => this._brokenfrontLevels.get(t) ?? 0;
+    return [
+      [
+        largeNukeIcon,
+        null,
+        UnitType.LargeNuke,
+        "large_nuke",
+        "buildLargeNuke",
+        "Shift+Digit1",
+      ],
+      [
+        clusterNukeIcon,
+        null,
+        UnitType.ClusterNuke,
+        "cluster_nuke",
+        "buildClusterNuke",
+        "Shift+Digit2",
+      ],
+      [
+        uraniumMineIcon,
+        levels(UnitType.UraniumMine),
+        UnitType.UraniumMine,
+        "uranium_mine",
+        "buildUraniumMine",
+        "Shift+Digit3",
+      ],
+      [
+        oilRigIcon,
+        levels(UnitType.OilRig),
+        UnitType.OilRig,
+        "oil_rig",
+        "buildOilRig",
+        "Shift+Digit4",
+      ],
+      [
+        airbaseIcon,
+        levels(UnitType.Airbase),
+        UnitType.Airbase,
+        "airbase",
+        "buildAirbase",
+        "Shift+Digit5",
+      ],
+      [
+        carrierIcon,
+        levels(UnitType.AircraftCarrier),
+        UnitType.AircraftCarrier,
+        "aircraft_carrier",
+        "buildAircraftCarrier",
+        "Shift+Digit6",
+      ],
+    ].map(toSlot);
+  }
+
   render() {
     const myPlayer = this.game?.myPlayer();
     if (
@@ -664,15 +829,28 @@ export class UnitDisplay extends LitElement implements Controller {
     ) {
       return null;
     }
+
+    const core = this.coreSlots().filter((slot) =>
+      this.isUnitDisplayed(slot.unitType),
+    );
+    const advanced = this.advancedSlots().filter((slot) =>
+      this.isUnitDisplayed(slot.unitType),
+    );
+    // Row 2 sits under row 1, so the grid is as wide as the wider row. Both
+    // rows start at column 1, so Shift+3 is directly under 3.
+    const columns = Math.max(core.length, advanced.length, 1);
+
     // A row in the bottom panel: below the control panel from lg up, above
     // it on landscape phones (index.html orders it), spread over the panel's
-    // width there. Below lg in portrait (side-bar) it is a column on the
-    // right edge of the screen, where index.html fixes the host.
+    // width there. Below lg in portrait (side-bar) the two rows collapse into
+    // one scrolling column on the right edge of the screen, where index.html
+    // fixes the host.
     return html`
       <div
-        class="unit-display-root relative p-0.5 border-white/10 w-full lg:border-t max-lg:landscape:border-b side-bar:w-auto side-bar:border side-bar:border-r-0 side-bar:rounded-l-lg side-bar:bg-gray-800/92 side-bar:shadow-lg
+        class="unit-display-root bf-bar relative w-full side-bar:w-auto side-bar:rounded-l-lg side-bar:shadow-lg
           ${this.moreActionsStart ? "unit-display-more-start" : ""}
           ${this.moreActionsEnd ? "unit-display-more-end" : ""}"
+        style=${`--bf-cols:${columns}`}
         data-radial-click-through
         @contextmenu=${(event: Event) => event.preventDefault()}
       >
@@ -680,133 +858,13 @@ export class UnitDisplay extends LitElement implements Controller {
           class="unit-display-scroll overflow-x-auto overflow-y-hidden overscroll-x-contain touch-none lg:overflow-visible side-bar:overflow-x-hidden side-bar:overflow-y-auto side-bar:overscroll-y-contain side-bar:max-h-[calc(100dvh-5.5rem)]"
           @scroll=${this.onScroll}
         >
-          <div
-            class="unit-display-grid grid gap-0.5 grid-rows-1 grid-flow-col auto-cols-fr lg:auto-cols-max lg:w-fit lg:mx-auto side-bar:grid-rows-none side-bar:grid-flow-row side-bar:grid-cols-1"
-          >
-            ${this.renderUnitItem(
-              cityIcon,
-              this._cities,
-              UnitType.City,
-              "city",
-              this.getHotkey("buildCity", "Digit1"),
-            )}
-            ${this.renderUnitItem(
-              factoryIcon,
-              this._factories,
-              UnitType.Factory,
-              "factory",
-              this.getHotkey("buildFactory", "Digit2"),
-            )}
-            ${this.renderUnitItem(
-              portIcon,
-              this._port,
-              UnitType.Port,
-              "port",
-              this.getHotkey("buildPort", "Digit3"),
-            )}
-            ${this.renderUnitItem(
-              defensePostIcon,
-              this._defensePost,
-              UnitType.DefensePost,
-              "defense_post",
-              this.getHotkey("buildDefensePost", "Digit4"),
-            )}
-            ${this.renderUnitItem(
-              missileSiloIcon,
-              this._missileSilo,
-              UnitType.MissileSilo,
-              "missile_silo",
-              this.getHotkey("buildMissileSilo", "Digit5"),
-            )}
-            ${this.renderUnitItem(
-              samLauncherIcon,
-              this._samLauncher,
-              UnitType.SAMLauncher,
-              "sam_launcher",
-              this.getHotkey("buildSamLauncher", "Digit6"),
-            )}
-            ${this.renderUnitItem(
-              warshipIcon,
-              this._warships,
-              UnitType.Warship,
-              "warship",
-              this.getHotkey("buildWarship", "Digit7"),
-            )}
-            ${this.renderUnitItem(
-              atomBombIcon,
-              null,
-              UnitType.AtomBomb,
-              "atom_bomb",
-              this.getHotkey("buildAtomBomb", "Digit8"),
-            )}
-            ${this.renderUnitItem(
-              hydrogenBombIcon,
-              null,
-              UnitType.HydrogenBomb,
-              "hydrogen_bomb",
-              this.getHotkey("buildHydrogenBomb", "Digit9"),
-            )}
-            ${this.renderUnitItem(
-              mirvIcon,
-              null,
-              UnitType.MIRV,
-              "mirv",
-              this.getHotkey("buildMIRV", "Digit0"),
-            )}
-            ${this.renderBrokenfrontItems()}
+          <div class="unit-display-grid bf-grid">
+            ${core.map((slot, i) => this.renderUnitItem(slot, 1, i + 1))}
+            ${advanced.map((slot, i) => this.renderUnitItem(slot, 2, i + 1))}
           </div>
         </div>
         ${this.renderUnitTooltip()}
       </div>
-    `;
-  }
-
-  /** BrokenFront buildables: no default hotkeys (the digits are taken). */
-  private renderBrokenfrontItems() {
-    const levels = (t: UnitType) => this._brokenfrontLevels.get(t) ?? 0;
-    return html`
-      ${this.renderUnitItem(
-        largeNukeIcon,
-        null,
-        UnitType.LargeNuke,
-        "large_nuke",
-        "",
-      )}
-      ${this.renderUnitItem(
-        clusterNukeIcon,
-        null,
-        UnitType.ClusterNuke,
-        "cluster_nuke",
-        "",
-      )}
-      ${this.renderUnitItem(
-        uraniumMineIcon,
-        levels(UnitType.UraniumMine),
-        UnitType.UraniumMine,
-        "uranium_mine",
-        "",
-      )}
-      ${this.renderUnitItem(
-        oilRigIcon,
-        levels(UnitType.OilRig),
-        UnitType.OilRig,
-        "oil_rig",
-        "",
-      )}
-      ${this.renderUnitItem(
-        airbaseIcon,
-        levels(UnitType.Airbase),
-        UnitType.Airbase,
-        "airbase",
-        "",
-      )}
-      ${this.renderUnitItem(
-        carrierIcon,
-        levels(UnitType.AircraftCarrier),
-        UnitType.AircraftCarrier,
-        "aircraft_carrier",
-        "",
-      )}
     `;
   }
 
@@ -821,25 +879,22 @@ export class UnitDisplay extends LitElement implements Controller {
     );
   }
 
-  private renderUnitItem(
-    icon: string,
-    number: number | null,
-    unitType: PlayerBuildableUnitType,
-    structureKey: string,
-    hotkey: string,
-  ) {
-    if (!this.isUnitDisplayed(unitType)) {
-      return html``;
-    }
+  /**
+   * One action-bar slot. The DOM shape is load-bearing: the wrapper carries
+   * the hover/peek/drag handlers, the inner div is the button, and the touch
+   * code finds the wrapper again with `.unit-display-grid > div`.
+   */
+  private renderUnitItem(slot: ActionSlot, row: number, column: number) {
+    const { icon, count, unitType, structureKey } = slot;
+    const hotkey = this.getHotkey(slot.keybind, slot.defaultCode);
     const selected = this.uiState.ghostStructure === unitType;
-    const displayHotkey = hotkey
-      .replace("Digit", "")
-      .replace("Key", "")
-      .toUpperCase();
+    const affordable = this.canBuild(unitType);
+    const uranium = this.uraniumCost(unitType);
 
     return html`
       <div
-        class="flex flex-col items-center relative"
+        class="bf-slot-wrap"
+        style=${`--r:${row};--c:${column}`}
         @mouseenter=${(event: MouseEvent) => {
           const item = event.currentTarget as HTMLElement;
           this._hoveredUnitTooltip = {
@@ -860,15 +915,9 @@ export class UnitDisplay extends LitElement implements Controller {
         }}
       >
         <div
-          class="${
-            this.canBuild(unitType) ? "" : "opacity-40"
-          } border border-slate-500 rounded-sm max-lg:landscape:h-7.5 side-bar:h-12 side-bar:min-w-6.5 w-full px-0.5 side-bar:px-0 pb-0.5 flex items-center justify-center gap-0.5 cursor-pointer lg:justify-start
-             ${
-            selected
-              ? "pointer-fine:hover:bg-gray-400/10"
-              : "pointer-fine:hover:bg-gray-800"
-          }
-             rounded-sm text-white ${selected ? "bg-slate-400/20" : ""}
+          class="bf-slot ${row === 2 ? "bf-slot-adv" : "bf-slot-core"}
+             ${affordable ? "" : "bf-slot-locked"}
+             ${selected ? "bf-slot-selected" : ""}
              ${this.tutorialHighlight === unitType ? "tutorial-highlight" : ""}"
           @click=${(event: Event) => {
             const item = (event.currentTarget as HTMLElement).closest(
@@ -884,7 +933,7 @@ export class UnitDisplay extends LitElement implements Controller {
             }
             if (selected) {
               this.inputHandler.setGhostStructure(null, "GUIclick");
-            } else if (this.canBuild(unitType)) {
+            } else if (affordable) {
               this.inputHandler.setGhostStructure(unitType, "GUIclick");
               if (fromTouch) {
                 this.eventBus?.emit(new TouchGhostPlacementSelectEvent());
@@ -922,29 +971,35 @@ export class UnitDisplay extends LitElement implements Controller {
             );
           }}
         >
-          ${
-            hotkey
-              ? html`<div
-                  class="unit-display-hotkey ml-0.5 text-[10px] relative -top-1 text-gray-400"
-                >
-                  ${displayHotkey}
-                </div>`
-              : nothing
-          }
-          <div
-            class="flex flex-col items-center gap-0 pt-0.5 lg:flex-row lg:gap-0.5"
-          >
+          <div class="bf-slot-art">
             <img
               src=${icon}
               alt=${translateText("unit_type." + structureKey)}
-              class="align-middle size-6 lg:size-5 max-lg:landscape:size-5"
+              class="bf-slot-icon"
             />
+          </div>
+          ${
+            hotkey
+              ? html`<div class="unit-display-hotkey bf-slot-key">
+                  ${shortHotkey(hotkey)}
+                </div>`
+              : nothing
+          }
+          ${
+            count !== null
+              ? html`<div class="bf-slot-count">${renderNumber(count)}</div>`
+              : nothing
+          }
+          <div class="bf-slot-cost">
+            <span class="bf-slot-gold"
+              >${renderNumber(this.cost(unitType))}</span
+            >
             ${
-              number !== null
-                ? html`<span class="hidden lg:inline text-xs leading-none"
-                    >${renderNumber(number)}</span
-                  >`
-                : null
+              // Just the marker: "25.0M 150☢" does not fit a slot, and the
+              // exact uranium price is a hover away in the tooltip.
+              uranium > 0
+                ? html`<span class="bf-slot-uranium">☢</span>`
+                : nothing
             }
           </div>
         </div>
@@ -960,10 +1015,7 @@ export class UnitDisplay extends LitElement implements Controller {
     if (!tooltip) return nothing;
     // The item can go away (a unit gets disabled) while it is hovered.
     if (!tooltip.element.isConnected) return nothing;
-    const displayHotkey = tooltip.hotkey
-      .replace("Digit", "")
-      .replace("Key", "")
-      .toUpperCase();
+    const displayHotkey = shortHotkey(tooltip.hotkey);
     // Measured at render time so the tooltip follows the item when the bar
     // scrolls or the layout changes, instead of staying where it was hovered.
     const root = this.querySelector<HTMLElement>(".unit-display-root");

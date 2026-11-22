@@ -16,12 +16,12 @@ deposits (roughly one per 60,000 land tiles, between 4 and 48).
 
 ## Uranium Mine
 
-| | |
-| --- | --- |
-| Cost | 400k gold, rising 400k per mine, capped at 1.5M |
-| Build time | 15s |
-| Placement | On a uranium deposit inside your territory |
-| Output | 1 uranium per level every 6s |
+|            |                                                   |
+| ---------- | ------------------------------------------------- |
+| Cost       | 400k gold, rising 400k per mine, capped at 1.5M   |
+| Build time | 15s                                               |
+| Placement  | On a uranium deposit inside your territory        |
+| Output     | 1 uranium per level every 6s                      |
 | Upgradable | Yes — each level adds another 1 uranium per cycle |
 
 A mine must stand on a deposit, so taking and holding deposit ground is the
@@ -32,13 +32,13 @@ bombed, nuked, and captured with the land under them.
 
 Nukes cost uranium on top of their gold price:
 
-| Warhead | Gold | Uranium |
-| --- | --- | --- |
-| Atom Bomb | 750k | 10 |
-| Large Nuke | 2.5M | 25 |
-| Cluster Nuke | 2.25M | 30 |
-| Hydrogen Bomb | 5M | 40 |
-| MIRV | 25M (+15M per MIRV already launched) | 150 |
+| Warhead       | Gold                                 | Uranium |
+| ------------- | ------------------------------------ | ------- |
+| Atom Bomb     | 750k                                 | 10      |
+| Large Nuke    | 2.5M                                 | 25      |
+| Cluster Nuke  | 2.25M                                | 30      |
+| Hydrogen Bomb | 5M                                   | 40      |
+| MIRV          | 25M (+15M per MIRV already launched) | 150     |
 
 If a lobby disables Uranium Mines there would be no way to earn uranium, so
 uranium costs switch off with them.

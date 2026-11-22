@@ -346,6 +346,32 @@ export class HelpModal extends BaseModal {
                       ${translateText("help_modal.action_enter")}
                     </td>
                   </tr>
+                  <!-- The action bar: row 1 on the number row, row 2 on the
+                       same keys with Shift. -->
+                  <tr class="hover:bg-white/5 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5">
+                      <div class="inline-flex items-center gap-1">
+                        ${this.renderKey(keybinds.buildCity)}
+                        <span class="text-white/40">–</span>
+                        ${this.renderKey(keybinds.buildMIRV)}
+                      </div>
+                    </td>
+                    <td class="py-3 border-b border-white/5 text-white/70">
+                      ${translateText("help_modal.action_bar_row1")}
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-white/5 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5">
+                      <div class="inline-flex items-center gap-1">
+                        ${this.renderKey(keybinds.buildLargeNuke)}
+                        <span class="text-white/40">–</span>
+                        ${this.renderKey(keybinds.buildAircraftCarrier)}
+                      </div>
+                    </td>
+                    <td class="py-3 border-b border-white/5 text-white/70">
+                      ${translateText("help_modal.action_bar_row2")}
+                    </td>
+                  </tr>
                   <tr class="hover:bg-white/5 transition-colors">
                     <td class="py-3 ps-4 border-b border-white/5">
                       ${this.renderKey(keybinds.toggleView)}

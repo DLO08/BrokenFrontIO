@@ -83,8 +83,6 @@ const TOUCH_TEXT_STEPS = new Set([
   "buy_warship",
   "buy_silo",
   "launch_atom",
-  // The BrokenFront buildables have no keybind, so their desktop text points
-  // at the build menu; touch gets the radial route as the others do.
   "buy_oil_rig",
   "buy_uranium_mine",
   "buy_airbase",
@@ -99,6 +97,10 @@ const HOTKEY_FALLBACKS = {
   buildWarship: "Digit7",
   buildMissileSilo: "Digit5",
   buildAtomBomb: "Digit8",
+  // Action-bar row 2.
+  buildOilRig: "Shift+Digit4",
+  buildUraniumMine: "Shift+Digit3",
+  buildAirbase: "Shift+Digit5",
 } as const;
 
 @customElement("tutorial-panel")

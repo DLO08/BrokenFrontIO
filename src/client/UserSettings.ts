@@ -39,6 +39,15 @@ export function getDefaultKeybinds(isMac: boolean): Record<string, string> {
     buildAtomBomb: "Digit8",
     buildHydrogenBomb: "Digit9",
     buildMIRV: "Digit0",
+    // BrokenFront's second action-bar row. Shift+digit, because every bare
+    // letter worth having is already bound and the row is meant to read as
+    // "the same slot, one page up".
+    buildLargeNuke: "Shift+Digit1",
+    buildClusterNuke: "Shift+Digit2",
+    buildUraniumMine: "Shift+Digit3",
+    buildOilRig: "Shift+Digit4",
+    buildAirbase: "Shift+Digit5",
+    buildAircraftCarrier: "Shift+Digit6",
     attackRatioDown: "KeyT",
     attackRatioUp: "KeyY",
     boatAttack: "KeyB",

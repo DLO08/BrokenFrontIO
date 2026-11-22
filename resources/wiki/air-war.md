@@ -9,22 +9,22 @@ land or an **Aircraft Carrier** at sea. No base, no sorties.
 
 ## Airbase
 
-| | |
-| --- | --- |
-| Cost | 1M gold, rising 1M per base, capped at 3M |
-| Build time | 15s |
-| Placement | Your territory, like a city |
-| Slots | 2 per level |
-| Upgradable | Yes |
+|            |                                           |
+| ---------- | ----------------------------------------- |
+| Cost       | 1M gold, rising 1M per base, capped at 3M |
+| Build time | 15s                                       |
+| Placement  | Your territory, like a city               |
+| Slots      | 2 per level                               |
+| Upgradable | Yes                                       |
 
 ## Aircraft Carrier
 
-| | |
-| --- | --- |
-| Cost | 2M gold, rising 2M per carrier, capped at 4M |
-| Health | 2500 |
-| Slots | 4, whatever its level |
-| Placement | Open water; it sails from your nearest port |
+|           |                                              |
+| --------- | -------------------------------------------- |
+| Cost      | 2M gold, rising 2M per carrier, capped at 4M |
+| Health    | 2500                                         |
+| Slots     | 4, whatever its level                        |
+| Placement | Open water; it sails from your nearest port  |
 
 A mobile airbase. Move it like a warship — attack-click the carrier, then
 attack-click where it should go — and it cruises around that spot. It carries
@@ -39,11 +39,11 @@ has fewer fighters than half its slots, it launches another every 15s and pays
 comes within 40 tiles, never stray more than 80 tiles from home, and die with
 their base.
 
-| | |
-| --- | --- |
-| Health | 300 |
-| Damage | 120 per burst, firing every 0.5s at 2 tiles |
-| Speed | 3 tiles/tick — faster than anything else in the air |
+|        |                                                     |
+| ------ | --------------------------------------------------- |
+| Health | 300                                                 |
+| Damage | 120 per burst, firing every 0.5s at 2 tiles         |
+| Speed  | 3 tiles/tick — faster than anything else in the air |
 
 Fighters are the answer to enemy bombers and paradrops. They do not touch
 missiles; that is what SAMs are for.
@@ -72,11 +72,11 @@ are lost**, so escort matters.
 
 ## Air defence
 
-| Threat | Answer |
-| --- | --- |
+| Threat                    | Answer                  |
+| ------------------------- | ----------------------- |
 | Bombers, transport planes | Fighters, SAM Launchers |
-| Missiles | SAM Launchers |
-| Carriers | Warships, bombers |
+| Missiles                  | SAM Launchers           |
+| Carriers                  | Warships, bombers       |
 
 SAM Launchers fire at enemy aircraft in range as well as at missiles, so a SAM
 behind your front line now covers two kinds of attack.

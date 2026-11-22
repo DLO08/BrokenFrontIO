@@ -8,13 +8,35 @@ uniform vec3 uColorRed;
 uniform vec3 uColorOrange;
 uniform vec3 uColorYellow;
 uniform vec3 uColorGreen;
+uniform vec3 uColorConstruction;
+uniform vec3 uColorReload;
+uniform vec3 uColorDeletion;
+uniform float uTrackTint;   // brightness of the unfilled part, as a factor
 uniform float uSolid;       // 1.0 = veterancy pip: fill solid with uSolidColor
 uniform vec3 uSolidColor;
 
 in vec2 vLocalPos;
 flat in float vProgress;
+flat in float vKind;        // 0 health, 1 construction, 2 reload, 3 deletion
 
 out vec4 fragColor;
+
+/**
+ * A bar's hue says what it is; only health varies its hue with the fill.
+ * Everything else keeps one flat color the whole way across, so a
+ * just-started build never reads as a nearly-dead unit.
+ */
+vec3 barColor() {
+  if (vKind < 0.5) {
+    if (vProgress < uThresholds.x) return uColorRed;
+    if (vProgress < uThresholds.y) return uColorOrange;
+    if (vProgress < uThresholds.z) return uColorYellow;
+    return uColorGreen;
+  }
+  if (vKind < 1.5) return uColorConstruction;
+  if (vKind < 2.5) return uColorReload;
+  return uColorDeletion;
+}
 
 void main() {
   // Veterancy pips are simple solid-filled rectangles (no border/threshold).
@@ -36,14 +58,15 @@ void main() {
   float fillWidth = vProgress * (w - 2.0 * bw);
   bool inFill = !inBorder && (x - bw) < fillWidth;
 
+  vec3 color = barColor();
+
   if (inFill) {
-    vec3 color;
-    if (vProgress < uThresholds.x) color = uColorRed;
-    else if (vProgress < uThresholds.y) color = uColorOrange;
-    else if (vProgress < uThresholds.z) color = uColorYellow;
-    else color = uColorGreen;
     fragColor = vec4(color, 1.0);
-  } else {
+  } else if (inBorder) {
     fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  } else {
+    // The empty part of the track is a dark wash of the bar's own color, so
+    // the bar still reads as "construction" / "reload" when it is near empty.
+    fragColor = vec4(color * uTrackTint, 1.0);
   }
 }
