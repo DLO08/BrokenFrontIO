@@ -13,11 +13,11 @@ The client reaches it at `getApiBase()` (`src/client/ApiBase.ts`):
 This service does not get to design its own API. Three things pin it down, and
 getting any of them wrong means players cannot join a game:
 
-| Pinned by | What it fixes |
-| --- | --- |
-| `packages/shared/src/ApiSchemas.ts` | Request/response bodies. `UserMeResponseSchema` is ~200 lines and the client parses every response with it. |
-| `src/server/ServerEnv.ts` | The issuer (`http://localhost:8787` for audience `localhost`, else `https://api.<audience>`) and that the JWKS is at `<issuer>/.well-known/jwks.json`, fetched with `x-api-key` and **no redirects**. |
-| `src/server/jwt.ts` | EdDSA/Ed25519 only, issuer and audience pinned, body parsed with `TokenPayloadSchema`. |
+| Pinned by                           | What it fixes                                                                                                                                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared/src/ApiSchemas.ts` | Request/response bodies. `UserMeResponseSchema` is ~200 lines and the client parses every response with it.                                                                                           |
+| `src/server/ServerEnv.ts`           | The issuer (`http://localhost:8787` for audience `localhost`, else `https://api.<audience>`) and that the JWKS is at `<issuer>/.well-known/jwks.json`, fetched with `x-api-key` and **no redirects**. |
+| `src/server/jwt.ts`                 | EdDSA/Ed25519 only, issuer and audience pinned, body parsed with `TokenPayloadSchema`.                                                                                                                |
 
 Two details are easy to get wrong:
 
@@ -61,18 +61,61 @@ guest accounts, and the minimum valid `/users/@me`.
 - `GET /users/@me`, `POST /users/@me/notices`,
   `PUT /users/@me/{level,search}_visibility`
 
+Stage 2 adds `POST /auth/google`, `POST /auth/google/link`, `POST /auth/steam`,
+`GET /auth/login/steam`, `GET /auth/steam/return`, `POST /auth/magic-link` and
+`GET /auth/login/token`.
+
 Refresh tokens are stored only as SHA-256 hashes, rotate on every use, and are
 grouped into families so that replaying a spent token revokes the whole chain —
 the standard answer to a stolen cookie, since the server cannot tell the thief
 from the victim.
 
-### Stage 2 — real sign-in
+### Stage 2 — real sign-in (done)
 
-`POST /auth/google` + `/auth/google/link`, `/auth/steam` + `/auth/steam/link`
-(including `link_ticket`, `link/conflict`, `link/discard`), `/auth/magic-link`.
-Needs from you: a Google OAuth client ID/secret, a Steam Web API key, and an
-email sender (Resend/Postmark/SMTP). Account linking and the conflict flow are
-the bulk of the work, not the OAuth dance.
+Three ways into an account, plus linking. Every provider is optional: an
+unconfigured one answers 501 rather than stopping the service from booting,
+so they can be switched on one at a time as credentials arrive.
+
+- **Google** — `POST /auth/google`, `POST /auth/google/link`. The client runs
+  Google Identity Services itself and posts only the resulting ID token, so
+  there is no client secret here and no redirect dance; verifying that token
+  is the whole boundary. Needs `GOOGLE_CLIENT_ID`.
+- **Steam** — `POST /auth/steam` for the desktop shell's session ticket, and
+  `GET /auth/login/steam` → `GET /auth/steam/return` for the website's OpenID
+  round trip. Needs `STEAM_API_KEY` (and `STEAM_APP_ID` for the ticket path).
+- **Magic link** — `POST /auth/magic-link`, `GET /auth/login/token`. Needs
+  `MAGIC_LINK_ORIGINS`, and `RESEND_API_KEY` to send for real.
+
+`/users/@me` now reports what is linked (`user.google`, `user.steam`,
+`user.email`) and promotes an account with any real identity from
+`trustTier: "untrusted"` to `"trusted"`.
+
+Four things here are security-critical rather than incidental, and each has a
+test in `tests/api/ApiProviders.test.ts`:
+
+| Trap                        | What goes wrong without it                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Google **audience** check   | An ID token minted for someone else's Google app is still validly signed by Google.                                                              |
+| Google `email_verified`     | Register a Google account carrying a victim's address, claim their account by email.                                                             |
+| Steam `claimed_id` ordering | It arrives in the user's own query string. Parse the SteamID before Steam confirms the signature and anyone signs in as anyone by editing a URL. |
+| Redirect allowlist          | `redirectDomain` comes from the caller. Without it we email real login tokens pointing at attacker-controlled sites.                             |
+
+Two smaller ones: Steam reports bad tickets as an `error` object inside an
+HTTP **200**, so status alone would accept every invalid ticket; and
+`POST /auth/magic-link` always answers 200 so it cannot be used to test
+whether an address has an account.
+
+### Stage 2b — the Steam link ticket flow
+
+Deliberately split out: `/auth/steam/link`, `/auth/steam/link_ticket/:token`,
+`/auth/steam/link/conflict` and `/auth/steam/link/discard` are not one more
+sign-in path but a stateful negotiation — mint a ticket in the desktop shell,
+confirm it on the web, and when the SteamID already belongs to another
+account, offer to discard that account, with `steam_has_progress`,
+`discard_blocked` (including the paid case), `discard_deferred` and
+`offer_unavailable` all meaning different things to the UI. See
+`src/client/SteamLink.ts` and `SteamLinkModal.ts` for the reason codes the
+client already renders.
 
 ### Stage 3 — profile and progression
 
@@ -116,14 +159,16 @@ Stripe checkout, the billing portal, webhooks and subscription state
 
 ## Dependency note
 
-`services/api` declares `pg`, which is **not currently installed** — the repo
-installs with `npm ci --ignore-scripts`, which cannot add a package. The
-lockfile needs updating once:
+`services/api` declares `pg`. It is in `package-lock.json`, but not yet in
+`node_modules` — the repo installs with `npm ci --ignore-scripts`, which only
+reads the lockfile. Run the normal install once to pick it up:
 
 ```bash
-npm install --package-lock-only   # updates package-lock.json only
-npm run inst                      # then the normal install
+npm run inst
 ```
 
-Until that runs the service will not boot, though it typechecks and its tests
-pass (`@types/pg` is already present transitively).
+Note that this machine runs Node 26 while the repo's `engines` asks for
+`>=24.15.0 <25`, and `.npmrc` sets `engine-strict=true`, so npm refuses with
+`EBADENGINE`. Either use Node 24, or pass `--engine-strict=false`. Until `pg`
+is in `node_modules` the service will not boot, though it typechecks and all
+its tests pass (they are written not to need a database).

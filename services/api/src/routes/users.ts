@@ -2,7 +2,12 @@ import type { UserMeResponse } from "@openfront/shared/ApiSchemas";
 import { Router } from "express";
 import { z } from "zod";
 
-import { noticesSeen, type User } from "../accounts";
+import {
+  identitiesFor,
+  noticesSeen,
+  type Identity,
+  type User,
+} from "../accounts";
 import { requireUser, type Ctx } from "../http/app";
 
 /**
@@ -26,10 +31,34 @@ import { requireUser, type Ctx } from "../http/app";
  */
 export function userMeBody(
   user: User,
-  extras: { noticesSeen: string[] },
+  extras: { noticesSeen: string[]; identities?: Identity[] },
 ): UserMeResponse {
+  const identities = extras.identities ?? [];
+  const google = identities.find((i) => i.provider === "google");
+  const steam = identities.find((i) => i.provider === "steam");
+
   return {
-    user: {},
+    user: {
+      // Each key is omitted rather than nulled when the provider is not
+      // linked: GoogleUserSchema/SteamUserSchema have no null form, and the
+      // account UI reads "absent" as "not linked".
+      ...(user.email === null ? {} : { email: user.email }),
+      ...(google?.email === undefined || google.email === null
+        ? {}
+        : { google: { email: google.email } }),
+      ...(steam === undefined
+        ? {}
+        : {
+            steam: {
+              steamId: steam.subject,
+              personaName: steam.displayName,
+              avatarUrl:
+                typeof steam.profile.avatarUrl === "string"
+                  ? steam.profile.avatarUrl
+                  : null,
+            },
+          }),
+    },
     ban: null,
     steamLicence: false,
     steamLicenceSince: null,
@@ -41,9 +70,12 @@ export function userMeBody(
       // No monetisation yet, so nobody is entitled to list a public custom
       // lobby. Flipping this on is part of the subscriptions stage.
       canCreatePublicLobbies: false,
-      // A guest with no linked provider is exactly what "untrusted" is for:
-      // it gates ranked, and is not an accusation.
-      trustTier: "untrusted",
+      // "untrusted" is a statement about how much we know, not an
+      // accusation: a brand-new guest with nothing linked gates out of
+      // ranked, while an account that has proved an identity does not.
+      trustTier: identities.some((i) => i.provider !== "guest")
+        ? "trusted"
+        : "untrusted",
       achievements: { singleplayerMap: [], player: [] },
       friends: [],
       subscription: null,
@@ -62,9 +94,11 @@ export function userRoutes(ctx: Ctx) {
 
   r.get("/@me", auth, async (req, res) => {
     const user = req.user!;
-    res.json(
-      userMeBody(user, { noticesSeen: await noticesSeen(ctx.db, user.id) }),
-    );
+    const [seen, identities] = await Promise.all([
+      noticesSeen(ctx.db, user.id),
+      identitiesFor(ctx.db, user.id),
+    ]);
+    res.json(userMeBody(user, { noticesSeen: seen, identities }));
   });
 
   r.post("/@me/notices", auth, async (req, res) => {

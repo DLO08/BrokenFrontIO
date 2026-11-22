@@ -47,6 +47,27 @@ const EnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
+
+  // --- sign-in providers. All optional: an unconfigured provider's routes
+  // answer 501 rather than failing at boot, so a deployment can run with
+  // only the ones it has credentials for.
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+
+  STEAM_API_KEY: z.string().min(1).optional(),
+  STEAM_APP_ID: z.coerce.number().int().positive().optional(),
+
+  /**
+   * Origins the emailed magic link may point at. The client sends its own
+   * `redirectDomain`, so without an allowlist anyone could have us mail a
+   * link to a site they control -- the email would come from us, carrying a
+   * real login token. Comma-separated.
+   */
+  MAGIC_LINK_ORIGINS: z.string().default("http://localhost:9000"),
+  MAGIC_LINK_TTL_MINUTES: z.coerce.number().int().positive().default(15),
+  MAGIC_LINK_FROM: z.string().optional(),
+  /** "resend" to send for real; "log" prints the link to stdout (dev). */
+  MAGIC_LINK_TRANSPORT: z.enum(["resend", "log"]).default("log"),
+  RESEND_API_KEY: z.string().min(1).optional(),
 });
 
 export type Config = {
@@ -62,6 +83,21 @@ export type Config = {
   cookieDomain: string | null;
   /** Drives cookie `Secure` and whether a missing API_KEY is fatal. */
   isProduction: boolean;
+  /**
+   * Origins we are willing to bounce a browser back to, or email a link to.
+   * Shared by the magic link and the Steam web sign-in: both take a
+   * destination from the caller, and both are an open redirect without this.
+   */
+  redirectOrigins: string[];
+  google: { clientId: string } | null;
+  steam: { apiKey: string; appId: number | null } | null;
+  magicLink: {
+    origins: string[];
+    ttlMinutes: number;
+    from: string;
+    transport: "resend" | "log";
+    resendApiKey: string | null;
+  };
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -87,6 +123,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     );
   }
 
+  const magicLinkOrigins = e.MAGIC_LINK_ORIGINS.split(",")
+    .map((o) => o.trim().replace(/\/$/, ""))
+    .filter((o) => o.length > 0);
+
+  if (e.MAGIC_LINK_TRANSPORT === "resend" && !e.RESEND_API_KEY) {
+    throw new Error("MAGIC_LINK_TRANSPORT=resend needs RESEND_API_KEY");
+  }
+  if (isProduction && e.MAGIC_LINK_TRANSPORT === "log") {
+    // The "transport" that prints login links to the log is a dev
+    // convenience; in production it is a way to hand out sessions.
+    throw new Error("MAGIC_LINK_TRANSPORT=log is not allowed in production");
+  }
+
   return {
     port: e.PORT,
     host: e.HOST,
@@ -99,5 +148,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     clientOrigin: e.CLIENT_ORIGIN,
     cookieDomain: e.COOKIE_DOMAIN ?? null,
     isProduction,
+    redirectOrigins: magicLinkOrigins,
+    google: e.GOOGLE_CLIENT_ID ? { clientId: e.GOOGLE_CLIENT_ID } : null,
+    steam: e.STEAM_API_KEY
+      ? { apiKey: e.STEAM_API_KEY, appId: e.STEAM_APP_ID ?? null }
+      : null,
+    magicLink: {
+      origins: magicLinkOrigins,
+      ttlMinutes: e.MAGIC_LINK_TTL_MINUTES,
+      from: e.MAGIC_LINK_FROM ?? "BrokenFront <no-reply@localhost>",
+      transport: e.MAGIC_LINK_TRANSPORT,
+      resendApiKey: e.RESEND_API_KEY ?? null,
+    },
   };
 }
