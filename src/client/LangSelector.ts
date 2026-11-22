@@ -309,8 +309,6 @@ export class LangSelector extends LitElement {
       "effects-grid",
       "token-login",
       "tribes-panel",
-      "steam-wishlist",
-      "steam-wishlist-button",
       "streaming-now",
       "tutorial-panel",
       // Re-sends its strings to the clan map frame.

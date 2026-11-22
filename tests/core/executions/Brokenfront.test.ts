@@ -12,6 +12,7 @@ import {
 import { AirStrikeExecution } from "@openfront/engine/execution/air/AirStrikeExecution";
 import { BrokenfrontIntentExecution } from "@openfront/engine/execution/BrokenfrontIntentExecution";
 import { ClusterNukeExecution } from "@openfront/engine/execution/ClusterNukeExecution";
+import { ConstructionExecution } from "@openfront/engine/execution/ConstructionExecution";
 import { OilRigExecution } from "@openfront/engine/execution/OilRigExecution";
 import {
   findTransitPath,
@@ -158,6 +159,27 @@ describe("uranium mines and nuke costs", () => {
     const large = mag(UnitType.LargeNuke);
     expect(large.outer).toBeGreaterThan(mag(UnitType.AtomBomb).outer);
     expect(large.outer).toBeLessThan(mag(UnitType.HydrogenBomb).outer);
+  });
+
+  // The client launches through a build_unit intent, which the executor turns
+  // into a ConstructionExecution; drive the same path end to end.
+  test.each([
+    [UnitType.LargeNuke, 1],
+    [UnitType.ClusterNuke, 2],
+  ])("a %s launched by intent lands on its target", (type, siloLevel) => {
+    alice.addUranium(1000);
+    const silo = alice.buildUnit(UnitType.MissileSilo, game.ref(10, 10), {});
+    for (let l = 1; l < siloLevel; l++) silo.increaseLevel();
+    const target = game.ref(130, 130);
+    const goldBefore = alice.gold();
+    const bobTilesBefore = bob.numTilesOwned();
+
+    game.addExecution(new ConstructionExecution(alice, type, target));
+    executeTicks(game, 300);
+
+    expect(alice.gold()).toBeLessThan(goldBefore);
+    expect(alice.uranium()).toBe(1000 - game.config().uraniumCost(type));
+    expect(bob.numTilesOwned()).toBeLessThan(bobTilesBefore);
   });
 });
 

@@ -27,7 +27,6 @@ import type { GameXpPanelState } from "../../components/GameXpPanel";
 import type { LegendCeremony } from "../../components/LegendCeremony";
 import "../../components/ProfileShare";
 import "../../components/PurchaseButton";
-import "../../components/SteamWishlist";
 import { Controller } from "../../Controller";
 import {
   fetchCosmetics,
@@ -544,25 +543,18 @@ export class WinModal extends LitElement implements Controller {
   }
 
   innerHtml() {
-    // The Steam desktop build has nothing to wishlist, and the Android app
-    // must not send the player to another store — fall through to the other
-    // promos so the box is never empty.
-    const canWishlist = !isDesktopShell();
-
+    // An iframe embed has no room for the tutorial video, so it always gets
+    // the cosmetic promo.
     if (isInIframe()) {
-      return canWishlist ? this.steamWishlist() : this.discordDisplay();
+      return this.renderPatternButton();
     }
 
     if (!this.isWin && getGamesPlayed() < 3) {
       return this.renderYoutubeTutorial();
     }
-    if (this.rand < 0.25 && canWishlist) {
-      return this.steamWishlist();
-    } else if (this.rand < 0.5) {
-      return this.discordDisplay();
-    } else {
-      return this.renderPatternButton();
-    }
+    return this.rand < 0.5
+      ? this.renderYoutubeTutorial()
+      : this.renderPatternButton();
   }
 
   renderYoutubeTutorial() {
@@ -664,40 +656,6 @@ export class WinModal extends LitElement implements Controller {
     `;
   }
 
-  steamWishlist(): TemplateResult {
-    return html`
-      <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
-        <h3 class="text-xl font-semibold text-white mb-3">
-          ${translateText("steam_wishlist.buy_on_steam")}
-        </h3>
-        <steam-wishlist
-          campaign="win_modal"
-          .active=${this.isVisible}
-        ></steam-wishlist>
-      </div>
-    `;
-  }
-
-  discordDisplay(): TemplateResult {
-    return html`
-      <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
-        <h3 class="text-xl font-semibold text-white mb-3">
-          ${translateText("win_modal.join_discord")}
-        </h3>
-        <p class="text-white mb-3">
-          ${translateText("win_modal.discord_description")}
-        </p>
-        <a
-          href="https://discord.com/invite/openfront"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-sm font-semibold transition-all duration-200 hover:bg-indigo-700 hover:-translate-y-px no-underline"
-        >
-          ${translateText("win_modal.join_server")}
-        </a>
-      </div>
-    `;
-  }
 
   async show() {
     void gamePortal.gameplayStop();

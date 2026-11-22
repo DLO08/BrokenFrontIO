@@ -1,5 +1,6 @@
 import version from "resources/version.txt?raw";
 import { ClientEnv } from "./ClientEnv";
+import { translateText } from "./Utils";
 
 // A build HAS a version only if it was tagged. resources/version.txt ships as
 // the placeholder "x.xx.xx" and only a tagged deploy overwrites it:
@@ -74,25 +75,30 @@ export function taggedGameVersion(rawVersion: string): string {
   return trimmed.startsWith("v") ? trimmed : `v${trimmed}`;
 }
 
-/** The nav bar's version elements, in both the mobile and desktop nav bars. */
+/** The label slots under the logo, in both the mobile and desktop nav bars. */
 const NAV_VERSION_SELECTOR = "#game-version, .game-version-display";
 
+/** Translation key of the release-stage label shown under the logo. */
+export const NAV_STAGE_LABEL_KEY = "main.pre_alpha";
+
 /**
- * Stamps the version onto the nav bar, and reports how many elements it found
- * so the caller can warn when the markup has moved out from under it.
+ * Stamps the release stage ("Pre-Alpha") under the logo, and reports how many
+ * elements it found so the caller can warn when the markup has moved out from
+ * under it.
+ *
+ * BrokenFront shows its stage there rather than a version number: the build's
+ * real identity (tagged version or commit) stays in page-footer, where it can
+ * be quoted in a bug report. data-i18n lets a language change relabel it.
  *
  * Lives here rather than inline in Main.ts so it can be tested without
  * importing Main.ts, which is a module of side effects.
- *
- * Uses taggedGameVersion, not currentGameVersion: the nav bar and the footer
- * answer different questions on an untagged build, by decision rather than by
- * drift (OPE-387).
  */
 export function renderNavVersion(root: ParentNode = document): number {
   const elements = root.querySelectorAll(NAV_VERSION_SELECTOR);
-  const label = taggedGameVersion(version);
+  const label = translateText(NAV_STAGE_LABEL_KEY);
   elements.forEach((el) => {
     (el as HTMLElement).style.fontFamily = '"BrokenFront", Inter, sans-serif';
+    el.setAttribute("data-i18n", NAV_STAGE_LABEL_KEY);
     el.textContent = label;
   });
   return elements.length;

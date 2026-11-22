@@ -105,7 +105,18 @@ The game server only serves `index.html` and the WebSocket. All other assets (JS
 | `docs/Replays.md`                      | Replay viewer design and code map          |
 | `docs/ScenarioEditor.md`               | Scenario editor design and status          |
 | `docs/GameServerRefactor.md`           | Plan for splitting `GameServer.ts`         |
+| `docs/Wiki.md`                         | The in-game wiki, and keeping the player-facing docs in step |
 | `vite.config.ts`                       | Build config, CDN handling, Vitest config  |
+
+## Player-facing docs
+
+Three places explain the game to players, and a gameplay change updates all of them in the same commit:
+
+- **The wiki** (`resources/wiki/*.md`, shown by `src/client/WikiModal.ts`) — one page per feature, with its numbers.
+- **The in-game tutorial** (`TUTORIAL_STEPS` in `src/client/hud/Tutorial.ts`, text under `tutorial.step.*`) — how a new player first meets the feature. Steps gate themselves with `applies(ctx)`, so a step for an optional feature is skipped in games that have it off; adding one means extending `TutorialContext`, `TutorialPanel.buildContext` and `tests/Tutorial.test.ts`.
+- **The help modal** (`src/client/HelpModal.ts`) — the build-menu and radial-menu reference tables.
+
+`docs/Wiki.md` has the checklist and the file map.
 
 ## UI Text / i18n
 

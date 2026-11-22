@@ -41,6 +41,7 @@ import {
   oilRigIcon,
   portIcon,
   samLauncherIcon,
+  uraniumIcon,
   uraniumMineIcon,
   warshipIcon,
 } from "../HotbarIcons";
@@ -158,6 +159,11 @@ export class UnitDisplay extends LitElement implements Controller {
       hydrogen: UnitType.HydrogenBomb,
       mirv: UnitType.MIRV,
       sam: UnitType.SAMLauncher,
+      uranium_mine: UnitType.UraniumMine,
+      oil_rig: UnitType.OilRig,
+      airbase: UnitType.Airbase,
+      large_nuke: UnitType.LargeNuke,
+      cluster_nuke: UnitType.ClusterNuke,
     };
     this.eventBus.on(TutorialHighlightEvent, (e) => {
       this.tutorialHighlight = (e.target && highlightUnits[e.target]) ?? null;
@@ -557,6 +563,16 @@ export class UnitDisplay extends LitElement implements Controller {
     return 0n;
   }
 
+  /** Uranium a launch costs on top of gold (0 when the economy is off). */
+  private uraniumCost(item: UnitType): number {
+    for (const bu of this.playerBuildables ?? []) {
+      if (bu.type === item) {
+        return bu.uraniumCost ?? 0;
+      }
+    }
+    return 0;
+  }
+
   private canBuild(item: UnitType): boolean {
     if (this.game?.config().isUnitDisabled(item)) return false;
     const player = this.game?.myPlayer();
@@ -565,11 +581,23 @@ export class UnitDisplay extends LitElement implements Controller {
       case UnitType.HydrogenBomb:
       case UnitType.MIRV:
       case UnitType.LargeNuke:
-      case UnitType.ClusterNuke:
+      case UnitType.ClusterNuke: {
+        // Mirrors PlayerImpl.nukeSpawn / canBuildUnitType, so a button never
+        // looks ready for a launch the engine would refuse.
+        const minSiloLevel =
+          item === UnitType.ClusterNuke
+            ? this.game.config().clusterNukeMinSiloLevel()
+            : 1;
+        const uranium = this.uraniumCost(item);
+        const silos = player?.units(UnitType.MissileSilo) ?? [];
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
-          (player?.units(UnitType.MissileSilo).length ?? 0) > 0
+          (uranium === 0 || uranium <= (player?.uranium() ?? 0)) &&
+          (minSiloLevel > 1
+            ? silos.some((silo) => silo.level() >= minSiloLevel)
+            : silos.length > 0)
         );
+      }
       case UnitType.Warship:
       case UnitType.AircraftCarrier:
         return (
@@ -987,8 +1015,23 @@ export class UnitDisplay extends LitElement implements Controller {
           <span class="text-yellow-300"
             >${renderNumber(this.cost(tooltip.unitType))}</span
           >
+          ${this.renderUraniumCost(tooltip.unitType)}
         </div>
       </div>
     `;
+  }
+
+  /** "+ 25 ☢" after the gold cost, for units that also cost uranium. */
+  private renderUraniumCost(unitType: UnitType) {
+    const uranium = this.uraniumCost(unitType);
+    if (uranium <= 0) return nothing;
+    return html`<span class="text-gray-400">+</span>
+      <img
+        src=${uraniumIcon}
+        width="13"
+        height="13"
+        alt=${translateText("control_panel.uranium")}
+      />
+      <span class="text-lime-400">${renderNumber(uranium)}</span>`;
   }
 }

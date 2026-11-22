@@ -136,6 +136,11 @@ export class MobileNavBar extends LitElement {
           data-page="page-friends"
           data-i18n="main.friends"
         ></button>
+        <button
+          class="${MOBILE_ITEM} ${currentPage === "page-wiki" ? "active" : ""}"
+          data-page="page-wiki"
+          data-i18n="main.wiki"
+        ></button>
         <div
           class="flex flex-col w-full mt-auto [.in-game_&]:hidden items-end justify-end pt-4 border-t border-white/10"
         ></div>

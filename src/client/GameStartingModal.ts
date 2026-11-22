@@ -32,7 +32,7 @@ export class GameStartingModal extends LitElement {
           ${translateText("main.copyright")}
         </div>
         <a
-          href="https://github.com/openfrontio/OpenFrontIO/blob/main/CREDITS.md"
+          href="https://github.com/DLO08/BrokenFrontIO/blob/main/CREDITS.md"
           target="_blank"
           rel="noopener noreferrer"
           class="block mb-4 text-lg font-medium tracking-wider uppercase text-brand no-underline transition-colors duration-200 hover:text-brand-light"

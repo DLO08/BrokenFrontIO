@@ -19,7 +19,13 @@ export type TutorialHighlight =
   | "mirv"
   | "sam"
   | "tribes"
-  | "nation";
+  | "nation"
+  // BrokenFront buildables.
+  | "uranium_mine"
+  | "oil_rig"
+  | "airbase"
+  | "large_nuke"
+  | "cluster_nuke";
 
 /** Emitted whenever the highlighted HUD element changes (null clears it). */
 export class TutorialHighlightEvent implements GameEvent {
@@ -66,6 +72,23 @@ export interface TutorialContext {
   hydrogenDisabled: boolean;
   mirvDisabled: boolean;
   samDisabled: boolean;
+
+  // --- BrokenFront ------------------------------------------------------
+  /** The trade book (agreements, tariffs, offers) is on in this game. */
+  tradeDealsEnabled: boolean;
+  /** True when marching through allied land (alliedTransit) is off. */
+  transitDisabled: boolean;
+  /** True when mines are off — with no way to earn uranium, nukes don't cost it. */
+  uraniumDisabled: boolean;
+  uraniumMines: number;
+  oilRigDisabled: boolean;
+  oilRigs: number;
+  /** Ports send fishing boats out on their own; nothing to build. */
+  fishingDisabled: boolean;
+  airbaseDisabled: boolean;
+  airbases: number;
+  largeNukeDisabled: boolean;
+  clusterNukeDisabled: boolean;
 }
 
 export interface TutorialStep {
@@ -146,6 +169,26 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     applies: (c) => c.nationsExist && !c.alliancesDisabled,
     manual: true,
   },
+  // BrokenFront diplomacy: both sit with the alliance steps, since that's
+  // where a player first has someone to trade with and fight alongside.
+  {
+    id: "trade_info",
+    bullets: ["trade_agreements", "trade_tariffs", "trade_offers"],
+    applies: (c) => c.tradeDealsEnabled,
+    manual: true,
+  },
+  {
+    id: "transit_info",
+    applies: (c) =>
+      !c.transitDisabled && c.nationsExist && !c.alliancesDisabled,
+    manual: true,
+  },
+  // Call to arms needs no feature flag: it works in classic games too.
+  {
+    id: "call_to_arms_info",
+    applies: (c) => c.nationsExist && !c.alliancesDisabled,
+    manual: true,
+  },
   {
     id: "buy_factory",
     highlight: "factory",
@@ -179,6 +222,20 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     applies: (c) => !c.portDisabled,
     manual: true,
   },
+  // The sea economy rides along with the port steps: a rig needs a coast, and
+  // fishing boats come out of the port the player just built.
+  {
+    id: "buy_oil_rig",
+    highlight: "oil_rig",
+    unit: UnitType.OilRig,
+    applies: (c) => !c.oilRigDisabled,
+    isDone: (c) => c.oilRigs > 0,
+  },
+  {
+    id: "fishing_info",
+    applies: (c) => !c.fishingDisabled && !c.portDisabled,
+    manual: true,
+  },
   {
     id: "buy_defense_post",
     highlight: "defense_post",
@@ -204,6 +261,22 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     applies: (c) => !c.siloDisabled,
     isDone: (c) => c.silos > 0,
   },
+  // With the uranium economy on, warheads cost uranium as well as gold, so
+  // these come before the launch step: without a mine it can't be completed.
+  {
+    id: "uranium_info",
+    highlight: "uranium_mine",
+    bullets: ["uranium_deposits", "uranium_costs", "uranium_market"],
+    applies: (c) => !c.uraniumDisabled,
+    manual: true,
+  },
+  {
+    id: "buy_uranium_mine",
+    highlight: "uranium_mine",
+    unit: UnitType.UraniumMine,
+    applies: (c) => !c.uraniumDisabled,
+    isDone: (c) => c.uraniumMines > 0,
+  },
   // Waits (via the earn-gold text) until the bomb is affordable, then asks
   // for a launch; done as soon as one of ours is in flight.
   {
@@ -222,6 +295,18 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     manual: true,
   },
   {
+    id: "large_nuke_info",
+    highlight: "large_nuke",
+    applies: (c) => !c.siloDisabled && !c.largeNukeDisabled,
+    manual: true,
+  },
+  {
+    id: "cluster_nuke_info",
+    highlight: "cluster_nuke",
+    applies: (c) => !c.siloDisabled && !c.clusterNukeDisabled,
+    manual: true,
+  },
+  {
     id: "hydrogen_info",
     highlight: "hydrogen",
     applies: (c) => !c.siloDisabled && !c.hydrogenDisabled,
@@ -237,6 +322,20 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     id: "sam_info",
     highlight: "sam",
     applies: (c) => !c.samDisabled,
+    manual: true,
+  },
+  {
+    id: "buy_airbase",
+    highlight: "airbase",
+    unit: UnitType.Airbase,
+    applies: (c) => !c.airbaseDisabled,
+    isDone: (c) => c.airbases > 0,
+  },
+  {
+    id: "air_power_info",
+    highlight: "airbase",
+    bullets: ["air_fighters", "air_strike", "air_paradrop", "air_carrier"],
+    applies: (c) => !c.airbaseDisabled,
     manual: true,
   },
 ];

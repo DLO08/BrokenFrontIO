@@ -121,6 +121,11 @@ export class DesktopNavBar extends LitElement {
           data-page="page-friends"
           data-i18n="main.friends"
         ></button>
+        <button
+          class="nav-menu-item ${currentPage === "page-wiki" ? "active" : ""} text-white/70 hover:text-brand font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-brand"
+          data-page="page-wiki"
+          data-i18n="main.wiki"
+        ></button>
         <!-- Utility cluster: bell, help, settings and the profile control are
              account/notification/utility affordances rather than page links,
              so they sit tight together behind a divider instead of in the nav

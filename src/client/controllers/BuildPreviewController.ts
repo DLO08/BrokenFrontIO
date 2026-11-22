@@ -47,17 +47,31 @@ import { UIState } from "../UIState";
 import { UserSettings } from "../UserSettings";
 import { GameView } from "../view";
 
-/** True for nuke types (AtomBomb, HydrogenBomb): ghost is preserved after placement so user can place multiple or keep selection (Enter/key confirm). */
+/**
+ * Nukes fired from a silo at a single aim point, which share the targeting
+ * preview: blast radius, flight path, SAM warnings and alliance checks. MIRV
+ * is left out: it splits over a whole player's territory instead.
+ */
+const SILO_NUKES: ReadonlySet<UnitType> = new Set([
+  UnitType.AtomBomb,
+  UnitType.HydrogenBomb,
+  UnitType.LargeNuke,
+  UnitType.ClusterNuke,
+]);
+
+export function isSiloNuke(unitType: UnitType | null | undefined): boolean {
+  return (
+    unitType !== null && unitType !== undefined && SILO_NUKES.has(unitType)
+  );
+}
+
+/** True for silo nukes: ghost is preserved after placement so user can place multiple or keep selection (Enter/key confirm). */
 export function shouldPreserveGhostAfterBuild(unitType: UnitType): boolean {
-  return unitType === UnitType.AtomBomb || unitType === UnitType.HydrogenBomb;
+  return isSiloNuke(unitType);
 }
 
 function requiresMissileSilo(unitType: UnitType | null | undefined): boolean {
-  return (
-    unitType === UnitType.AtomBomb ||
-    unitType === UnitType.HydrogenBomb ||
-    unitType === UnitType.MIRV
-  );
+  return isSiloNuke(unitType) || unitType === UnitType.MIRV;
 }
 
 // tSamIntercept value used to flag an untargetable (impassable) destination:
@@ -184,13 +198,19 @@ function findBestSilo(
   game: GameView,
   dstX: number,
   dstY: number,
+  minLevel = 1,
 ) {
   const silos = myPlayer.units(UnitType.MissileSilo);
   let bestSilo: (typeof silos)[number] | null = null;
   let minDistance = Infinity;
   for (let i = 0; i < silos.length; i++) {
     const u = silos[i];
-    if (!u.isActive() || u.isInCooldown() || u.isUnderConstruction()) {
+    if (
+      !u.isActive() ||
+      u.isInCooldown() ||
+      u.isUnderConstruction() ||
+      (minLevel > 1 && u.level() < minLevel)
+    ) {
       continue;
     }
     const dist =
@@ -531,10 +551,7 @@ export class BuildPreviewController implements Controller {
     if (tileRef === undefined || !this.ghostUnit) return "none";
     const myPlayer = this.game.myPlayer();
     const nukeType = this.ghostUnit.buildableUnit.type;
-    if (
-      !myPlayer ||
-      (nukeType !== UnitType.AtomBomb && nukeType !== UnitType.HydrogenBomb)
-    ) {
+    if (!myPlayer || !isSiloNuke(nukeType)) {
       return "none";
     }
     // Nuking any ally breaks the alliance, but only betraying a connected,
@@ -770,7 +787,7 @@ export class BuildPreviewController implements Controller {
   }
 
   /**
-   * For AtomBomb / HydrogenBomb ghosts, push the Bezier trajectory preview
+   * For silo-nuke ghosts, push the Bezier trajectory preview
    * (closest player-owned silo → target, accounting for non-allied SAMs).
    * Cleared whenever the ghost isn't a nuke, has no target, or the player
    * has no silos. Unlike the ghost icon, the trajectory also renders when
@@ -778,8 +795,7 @@ export class BuildPreviewController implements Controller {
    */
   private canShowNukeTrajectory(tileRef: TileRef | undefined): boolean {
     if (!this.ghostUnit || tileRef === undefined) return false;
-    const type = this.ghostUnit.buildableUnit.type;
-    return type === UnitType.AtomBomb || type === UnitType.HydrogenBomb;
+    return isSiloNuke(this.ghostUnit.buildableUnit.type);
   }
 
   private buildTrajectoryStatic(
@@ -812,11 +828,17 @@ export class BuildPreviewController implements Controller {
       this.clearNukeTrajectory();
       return;
     }
+    // A cluster nuke only fires from a silo upgraded far enough (nukeSpawn).
+    const minLevel =
+      this.ghostUnit!.buildableUnit.type === UnitType.ClusterNuke
+        ? this.game.config().clusterNukeMinSiloLevel()
+        : 1;
     const bestSilo = findBestSilo(
       myPlayer,
       this.game,
       this.game.x(tileRef!),
       this.game.y(tileRef!),
+      minLevel,
     );
     if (!bestSilo) {
       this.clearNukeTrajectory();
@@ -866,6 +888,9 @@ export class BuildPreviewController implements Controller {
       }
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
+      case UnitType.LargeNuke:
+      // The salvo's whole footprint: the centre warhead plus the ring.
+      case UnitType.ClusterNuke:
         return this.game.config().nukeMagnitudes(u.type).outer;
       case UnitType.Factory:
         return this.game.config().trainStationMaxRange();
@@ -1201,10 +1226,9 @@ export class BuildPreviewController implements Controller {
       }
 
       const isNuke = unitType === UnitType.AtomBomb;
-      const rocketDirectionUp =
-        unitType === UnitType.AtomBomb || unitType === UnitType.HydrogenBomb
-          ? this.uiState.rocketDirectionUp
-          : undefined;
+      const rocketDirectionUp = isSiloNuke(unitType)
+        ? this.uiState.rocketDirectionUp
+        : undefined;
       this.eventBus.emit(
         new BuildUnitIntentEvent(
           unitType,
@@ -1226,12 +1250,7 @@ export class BuildPreviewController implements Controller {
     unitType: UnitType,
   ): boolean {
     const duration = this.userSettings.nukeAllianceSafetyDuration();
-    if (
-      duration <= 0 ||
-      (unitType !== UnitType.AtomBomb &&
-        unitType !== UnitType.HydrogenBomb &&
-        unitType !== UnitType.MIRV)
-    ) {
+    if (duration <= 0 || !requiresMissileSilo(unitType)) {
       return false;
     }
 

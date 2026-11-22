@@ -149,6 +149,27 @@ export class HelpModal extends BaseModal {
             </button>
           </section>
 
+          <!-- The feature wiki: one page per BrokenFront feature. -->
+          <section
+            class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/5 rounded-xl border border-white/10 px-5 py-4 mb-8"
+          >
+            <div>
+              <h3 class="!mt-0 !mb-1">
+                ${translateText("help_modal.wiki_title")}
+              </h3>
+              <p class="!mb-0 text-sm">
+                ${translateText("help_modal.wiki_desc")}
+              </p>
+            </div>
+            <button
+              class="shrink-0 hover:bg-white/5 px-6 py-2 text-xs font-bold transition-all duration-200 rounded-lg uppercase tracking-widest bg-brand/20 text-brand-light border border-brand/30 shadow-[var(--shadow-brand)]"
+              data-page="page-wiki"
+              @click=${() => window.showPage?.("page-wiki")}
+            >
+              ${translateText("help_modal.wiki_open")}
+            </button>
+          </section>
+
           <!-- Video Tutorial Section -->
           <div class="flex items-center gap-3 mb-3">
             <div class="text-blue-400">
@@ -851,6 +872,34 @@ export class HelpModal extends BaseModal {
                       >${translateText("help_modal.radial_donate_gold")}</span
                     >
                   </li>
+                  <li class="flex items-center gap-3">
+                    <img
+                      src=${assetUrl("images/AirbaseIconWhite.svg")}
+                      class="w-8 h-8 scale-75 origin-left"
+                    />
+                    <span>${translateText("help_modal.radial_air_strike")}</span>
+                  </li>
+                  <li class="flex items-center gap-3">
+                    <img
+                      src=${assetUrl("images/DonateTroopIconWhite.svg")}
+                      class="w-8 h-8 scale-75 origin-left"
+                    />
+                    <span>${translateText("help_modal.radial_paradrop")}</span>
+                  </li>
+                  <li class="flex items-center gap-3">
+                    <img
+                      src=${assetUrl("images/SwordIconWhite.svg")}
+                      class="w-8 h-8 scale-75 origin-left"
+                    />
+                    <span>${translateText("help_modal.radial_transit")}</span>
+                  </li>
+                  <li class="flex items-center gap-3">
+                    <img
+                      src=${assetUrl("images/AllianceIconWhite.svg")}
+                      class="w-8 h-8 scale-75 origin-left"
+                    />
+                    <span>${translateText("help_modal.radial_call_to_arms")}</span>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -1212,6 +1261,102 @@ export class HelpModal extends BaseModal {
                       class="py-3 border-b border-white/5 text-white/60 text-sm"
                     >
                       ${translateText("help_modal.build_mirv_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.large_nuke")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/LargeNukeIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_large_nuke_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.cluster_nuke")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/ClusterNukeIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_cluster_nuke_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.uranium_mine")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/UraniumMineIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_uranium_mine_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.oil_rig")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/OilRigIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_oil_rig_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.airbase")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/AirbaseIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_airbase_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.aircraft_carrier")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/CarrierIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_carrier_desc")}
                     </td>
                   </tr>
                 </tbody>

@@ -37,6 +37,17 @@ function ctx(overrides: Partial<TutorialContext> = {}): TutorialContext {
     hydrogenDisabled: false,
     mirvDisabled: false,
     samDisabled: false,
+    tradeDealsEnabled: true,
+    transitDisabled: false,
+    uraniumDisabled: false,
+    uraniumMines: 0,
+    oilRigDisabled: false,
+    oilRigs: 0,
+    fishingDisabled: false,
+    airbaseDisabled: false,
+    airbases: 0,
+    largeNukeDisabled: false,
+    clusterNukeDisabled: false,
     ...overrides,
   };
 }
@@ -155,8 +166,17 @@ describe("TutorialProgress", () => {
       hydrogenDisabled: true,
       mirvDisabled: true,
       samDisabled: true,
+      tradeDealsEnabled: false,
+      transitDisabled: true,
+      uraniumDisabled: true,
+      oilRigDisabled: true,
+      fishingDisabled: true,
+      airbaseDisabled: true,
+      largeNukeDisabled: true,
+      clusterNukeDisabled: true,
     });
-    expect(p.total(c)).toBe(TUTORIAL_STEPS.length - 17);
+    // Everything but spawn, the first attack, and the three troop/ratio steps.
+    expect(p.total(c)).toBe(5);
 
     settle(p, c);
     settle(p, c);
@@ -187,12 +207,27 @@ describe("TutorialProgress", () => {
     expect(p.current()?.id).toBe("alliance_info");
     p.acknowledge();
     settle(p, ctx({ allied: true }));
+    // The BrokenFront diplomacy steps sit between the alliance and the city.
+    for (const id of ["trade_info", "transit_info", "call_to_arms_info"]) {
+      expect(p.current()?.id).toBe(id);
+      p.acknowledge();
+      settle(p, ctx({ allied: true }));
+    }
     expect(p.current()?.id).toBe("buy_factory");
 
-    // Without nations (or with alliances off) both steps are skipped.
+    // Without nations (or with alliances off) the alliance steps are skipped,
+    // and so are the two that need an ally; trade needs neither.
     const q = new TutorialProgress(TUTORIAL_STEPS.slice(first));
     q.update(ctx({ nationsExist: false }));
+    expect(q.current()?.id).toBe("trade_info");
+    q.acknowledge();
+    settle(q, ctx({ nationsExist: false }));
     expect(q.current()?.id).toBe("buy_factory");
+
+    // With the trade book off as well, nothing is left between them.
+    const r = new TutorialProgress(TUTORIAL_STEPS.slice(first));
+    r.update(ctx({ nationsExist: false, tradeDealsEnabled: false }));
+    expect(r.current()?.id).toBe("buy_factory");
   });
 
   it("gates the tribes step on affordable gold, then the city step on the city existing", () => {
@@ -242,6 +277,14 @@ describe("TutorialProgress", () => {
     p.acknowledge();
     settle(p, ctx({ factories: 1, ports: 1 }));
 
+    // The sea economy: a rig to build, then how fishing boats work.
+    expect(p.current()?.id).toBe("buy_oil_rig");
+    expect(p.current()?.highlight).toBe("oil_rig");
+    settle(p, ctx({ factories: 1, ports: 1, oilRigs: 1 }));
+    expect(p.current()?.id).toBe("fishing_info");
+    p.acknowledge();
+    settle(p, ctx({ factories: 1, ports: 1, oilRigs: 1 }));
+
     expect(p.current()?.id).toBe("buy_defense_post");
     expect(p.current()?.highlight).toBe("defense_post");
     settle(p, ctx({ factories: 1, ports: 1, defensePosts: 1 }));
@@ -256,12 +299,22 @@ describe("TutorialProgress", () => {
     expect(p.stepDone()).toBe(false);
     settle(p, ctx({ factories: 1, ports: 1, warships: 1, silos: 1 }));
 
+    // Uranium comes before the launch: with the economy on, nukes need it.
+    expect(p.current()?.id).toBe("uranium_info");
+    expect(p.current()?.highlight).toBe("uranium_mine");
+    p.acknowledge();
+    settle(p, ctx({ silos: 1 }));
+    expect(p.current()?.id).toBe("buy_uranium_mine");
+    settle(p, ctx({ silos: 1, uraniumMines: 1 }));
+
     expect(p.current()?.id).toBe("launch_atom");
     expect(p.current()?.highlight).toBe("atom");
     settle(p, ctx({ silos: 1, atomLaunched: true }));
 
     for (const [id, highlight] of [
       ["atom_info", "atom"],
+      ["large_nuke_info", "large_nuke"],
+      ["cluster_nuke_info", "cluster_nuke"],
       ["hydrogen_info", "hydrogen"],
       ["mirv_info", "mirv"],
       ["sam_info", "sam"],
@@ -271,6 +324,16 @@ describe("TutorialProgress", () => {
       p.acknowledge();
       settle(p, ctx({ silos: 1 }));
     }
+
+    // The air war is last.
+    expect(p.current()?.id).toBe("buy_airbase");
+    expect(p.current()?.highlight).toBe("airbase");
+    settle(p, ctx({ silos: 1, airbases: 1 }));
+    expect(p.current()?.id).toBe("air_power_info");
+    expect(p.current()?.bullets).toHaveLength(4);
+    p.acknowledge();
+    settle(p, ctx({ silos: 1, airbases: 1 }));
+
     expect(p.finished()).toBe(true);
   });
 });

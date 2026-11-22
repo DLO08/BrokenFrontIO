@@ -137,8 +137,11 @@ export function highlightTypesForUnit(
   switch (unitType) {
     case UnitType.AtomBomb:
     case UnitType.HydrogenBomb:
+    case UnitType.LargeNuke:
+    case UnitType.ClusterNuke:
       return [UnitType.MissileSilo, UnitType.SAMLauncher];
     case UnitType.Warship:
+    case UnitType.AircraftCarrier:
       return [UnitType.Port];
     case UnitType.MIRV:
       return [UnitType.MissileSilo];

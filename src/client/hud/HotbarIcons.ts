@@ -12,6 +12,7 @@ export const portIcon = assetUrl("images/PortIcon.svg");
 export const samLauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 export const defensePostIcon = assetUrl("images/ShieldIconWhite.svg");
 export const uraniumMineIcon = assetUrl("images/UraniumMineIconWhite.svg");
+export const uraniumIcon = assetUrl("images/UraniumIcon.svg");
 export const oilRigIcon = assetUrl("images/OilRigIconWhite.svg");
 export const airbaseIcon = assetUrl("images/AirbaseIconWhite.svg");
 export const carrierIcon = assetUrl("images/CarrierIconWhite.svg");

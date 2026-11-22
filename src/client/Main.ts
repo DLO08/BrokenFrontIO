@@ -545,6 +545,7 @@ class Client {
     // The canonical profile link, `/player/<id>` (see playerProfileUrl).
     modalRouter.registerPath("profile", playerProfileRouteArgs);
     modalRouter.register("help", { tag: "help-modal", pageId: "page-help" });
+    modalRouter.register("wiki", { tag: "wiki-modal", pageId: "page-wiki" });
     modalRouter.register("news", { tag: "news-modal" });
     modalRouter.register("language", {
       tag: "language-modal",

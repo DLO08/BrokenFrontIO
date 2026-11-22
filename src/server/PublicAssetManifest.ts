@@ -20,6 +20,7 @@ const HASHED_PUBLIC_ASSET_GLOBS = [
   "maps/**/*",
   "sounds/**/*",
   "sprites/**/*",
+  "wiki/**/*",
 ] as const;
 
 const manifestCache = new Map<string, AssetManifest>();

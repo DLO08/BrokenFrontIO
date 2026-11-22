@@ -36,6 +36,9 @@ const COST_POLL_TYPES = [
   UnitType.Warship,
   UnitType.MissileSilo,
   UnitType.AtomBomb,
+  UnitType.OilRig,
+  UnitType.UraniumMine,
+  UnitType.Airbase,
 ] as const;
 
 /** `unit_type.*` name key per build-step unit, for the earn-gold text. */
@@ -47,6 +50,9 @@ const UNIT_NAME_KEYS: Partial<Record<UnitType, string>> = {
   [UnitType.Warship]: "warship",
   [UnitType.MissileSilo]: "missile_silo",
   [UnitType.AtomBomb]: "atom_bomb",
+  [UnitType.OilRig]: "oil_rig",
+  [UnitType.UraniumMine]: "uranium_mine",
+  [UnitType.Airbase]: "airbase",
 };
 /** Ticks the "you're ready" message stays up before the panel closes. */
 const COMPLETE_LINGER_TICKS = 50;
@@ -58,7 +64,7 @@ const NEARBY_TRIBE_MARK_COUNT = 3;
 const BORDER_REFRESH_TICKS = 10;
 
 /** Steps that need a coast: until we own one, they ask the player to expand to it. */
-const COAST_STEPS = new Set(["send_boat", "buy_port"]);
+const COAST_STEPS = new Set(["send_boat", "buy_port", "buy_oil_rig"]);
 
 /**
  * Steps with a `tutorial.step_touch.*` variant: their desktop text leans on
@@ -77,6 +83,11 @@ const TOUCH_TEXT_STEPS = new Set([
   "buy_warship",
   "buy_silo",
   "launch_atom",
+  // The BrokenFront buildables have no keybind, so their desktop text points
+  // at the build menu; touch gets the radial route as the others do.
+  "buy_oil_rig",
+  "buy_uranium_mine",
+  "buy_airbase",
 ]);
 
 /** Defaults shown when the player hasn't rebound the action (see UnitDisplay). */
@@ -403,6 +414,19 @@ export class TutorialPanel extends LitElement implements Controller {
         .isUnitDisabled(UnitType.HydrogenBomb),
       mirvDisabled: this.game.config().isUnitDisabled(UnitType.MIRV),
       samDisabled: this.game.config().isUnitDisabled(UnitType.SAMLauncher),
+      tradeDealsEnabled: this.game.config().brokenfrontFeature("tradeDeals"),
+      transitDisabled: this.game.config().isUnitDisabled(UnitType.TroopColumn),
+      uraniumDisabled: this.game.config().isUnitDisabled(UnitType.UraniumMine),
+      uraniumMines: player.units(UnitType.UraniumMine).length,
+      oilRigDisabled: this.game.config().isUnitDisabled(UnitType.OilRig),
+      oilRigs: player.units(UnitType.OilRig).length,
+      fishingDisabled: this.game.config().isUnitDisabled(UnitType.FishingBoat),
+      airbaseDisabled: this.game.config().isUnitDisabled(UnitType.Airbase),
+      airbases: player.units(UnitType.Airbase).length,
+      largeNukeDisabled: this.game.config().isUnitDisabled(UnitType.LargeNuke),
+      clusterNukeDisabled: this.game
+        .config()
+        .isUnitDisabled(UnitType.ClusterNuke),
     };
   }
 

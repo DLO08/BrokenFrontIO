@@ -5,7 +5,9 @@
 
 import {
   UT_ATOM_BOMB,
+  UT_CLUSTER_WARHEAD,
   UT_HYDROGEN_BOMB,
+  UT_LARGE_NUKE,
   UT_MIRV_WARHEAD,
 } from "../../../types";
 import type { RenderSettings } from "../../RenderSettings";
@@ -20,11 +22,17 @@ export function nukeExplosionRadius(
 ): number | undefined {
   switch (unitType) {
     case UT_ATOM_BOMB:
+    // Each cluster warhead is an atom bomb (Config.nukeMagnitudes).
+    case UT_CLUSTER_WARHEAD:
       return fx.nukeRadiusAtom;
     case UT_HYDROGEN_BOMB:
       return fx.nukeRadiusHydro;
+    case UT_LARGE_NUKE:
+      // Sits between the atom and hydrogen bombs, as its blast does.
+      return (fx.nukeRadiusAtom + fx.nukeRadiusHydro) / 2;
     case UT_MIRV_WARHEAD:
       return fx.nukeRadiusMirv;
+    // The cluster nuke's carrier never detonates itself; its warheads do.
     default:
       return undefined;
   }

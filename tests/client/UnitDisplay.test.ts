@@ -42,6 +42,7 @@ function makeDisplay(
     inSpawnPhase: () => false,
     config: () => ({
       isUnitDisabled: (unitType: UnitType) => disabledUnits.includes(unitType),
+      clusterNukeMinSiloLevel: () => 2,
       gameConfig: () => ({ tutorial }),
     }),
   } as any;
@@ -1390,5 +1391,66 @@ describe("UnitDisplay as a side column below lg in portrait", () => {
         display.remove();
       }
     });
+  });
+});
+
+describe("BrokenFront nukes in the unit bar", () => {
+  function withPlayer(uranium: number, siloLevels: number[]) {
+    const made = makeDisplay();
+    (made.display as any).game.myPlayer = () => ({
+      gold: () => 10_000_000n,
+      uranium: () => uranium,
+      isAlive: () => true,
+      units: (unitType: UnitType) =>
+        unitType === UnitType.MissileSilo
+          ? siloLevels.map((level) => ({ level: () => level }))
+          : [],
+    });
+    (made.display as any).playerBuildables = [
+      { type: UnitType.AtomBomb, cost: 750_000n, uraniumCost: 10 },
+      { type: UnitType.LargeNuke, cost: 2_500_000n, uraniumCost: 25 },
+      { type: UnitType.ClusterNuke, cost: 2_250_000n, uraniumCost: 30 },
+      { type: UnitType.City, cost: 125_000n, uraniumCost: 0 },
+    ];
+    return made.display;
+  }
+
+  test("a nuke is not ready without the uranium it costs", () => {
+    const display = withPlayer(20, [1]);
+    try {
+      expect((display as any).canBuild(UnitType.AtomBomb)).toBe(true);
+      expect((display as any).canBuild(UnitType.LargeNuke)).toBe(false);
+    } finally {
+      display.remove();
+    }
+  });
+
+  test("a cluster nuke needs a level-2 silo", () => {
+    const low = withPlayer(100, [1]);
+    const high = withPlayer(100, [1, 2]);
+    try {
+      expect((low as any).canBuild(UnitType.ClusterNuke)).toBe(false);
+      expect((high as any).canBuild(UnitType.ClusterNuke)).toBe(true);
+    } finally {
+      low.remove();
+      high.remove();
+    }
+  });
+
+  test("the tooltip lists the uranium cost next to the gold cost", async () => {
+    const display = withPlayer(0, [1]);
+    try {
+      const host = document.createElement("div");
+      const { render } = await import("lit");
+      render((display as any).renderUraniumCost(UnitType.LargeNuke), host);
+      expect(host.textContent).toContain("25");
+      expect(host.querySelector("img")?.getAttribute("src")).toContain(
+        "UraniumIcon",
+      );
+      render((display as any).renderUraniumCost(UnitType.City), host);
+      expect(host.querySelector("img")).toBeNull();
+    } finally {
+      display.remove();
+    }
   });
 });

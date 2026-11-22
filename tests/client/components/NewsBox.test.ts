@@ -392,9 +392,17 @@ describe("NewsBox", () => {
       expect(new Set(ids).size).toBe(ids.length);
     });
 
-    it("contains a tournament entry", () => {
-      const items = getVisibleNewsItems(allItems);
-      expect(items.some((i) => i.type === "tournament")).toBe(true);
+    it("is not empty", () => {
+      expect(getVisibleNewsItems(allItems).length).toBeGreaterThan(0);
+    });
+
+    // The tournaments this used to carry were run on the upstream OpenFront
+    // Discord, which this project does not own. Guards against one creeping
+    // back in with a link we cannot honour.
+    it("links to no upstream OpenFront community", () => {
+      for (const item of getVisibleNewsItems(allItems)) {
+        expect(item.url ?? "").not.toMatch(/discord\.gg|openfront/i);
+      }
     });
   });
 });
